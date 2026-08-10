@@ -174,7 +174,7 @@ export default async function AdminProjectsPage() {
                         />
                         <DeleteDialog
                           entityLabel={`project "${project.title}"`}
-                          action={() => deleteProject(project.id)}
+                          action={deleteProject.bind(null, project.id)}
                           description="This permanently deletes the project, its tasks, and its documents."
                         />
                       </div>

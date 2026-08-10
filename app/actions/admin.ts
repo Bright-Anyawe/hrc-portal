@@ -146,6 +146,49 @@ export async function updateConsultant(
   return updateUserData(prev, formData, "CONSULTANT");
 }
 
+export async function changeUserRole(
+  userId: string,
+  newRole: Role
+): Promise<ActionResult> {
+  const session = await requireRole(["ADMIN"]);
+
+  if (newRole !== "CLIENT" && newRole !== "CONSULTANT") {
+    return { ok: false, error: "Admins cannot be demoted to that role." };
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, name: true, email: true, role: true, googleId: true },
+  });
+  if (!user) return { ok: false, error: "User not found." };
+  if (user.role === "ADMIN") {
+    return { ok: false, error: "Admin accounts cannot be re-rolled here." };
+  }
+  if (user.role === newRole) return { ok: true };
+
+  await prisma.user.update({ where: { id: userId }, data: { role: newRole } });
+
+  await logAudit({
+    actorId: session.sub,
+    actorName: session.name,
+    action: "USER_ROLE_CHANGED",
+    entityType: "User",
+    entityId: userId,
+    details: {
+      name: user.name,
+      email: user.email,
+      from: user.role,
+      to: newRole,
+    },
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/admin/clients");
+  revalidatePath("/admin/consultants");
+  revalidatePath("/admin/projects");
+  return { ok: true };
+}
+
 export async function deleteUser(userId: string): Promise<ActionResult> {
   const session = await requireRole(["ADMIN"]);
 

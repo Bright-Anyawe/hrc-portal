@@ -4,6 +4,7 @@ import { unassignConsultant, deleteUser } from "@/app/actions/admin";
 import { AddUserModal } from "@/components/admin/add-user-modal";
 import { EditUserDialog } from "@/components/admin/edit-user-dialog";
 import { DeleteDialog } from "@/components/admin/delete-dialog";
+import { ChangeRoleDialog } from "@/components/admin/change-role-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, getInitials } from "@/components/ui/avatar";
@@ -119,6 +120,14 @@ export default async function AdminClientsPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex justify-end gap-1">
+                      <ChangeRoleDialog
+                        user={{
+                          id: client.id,
+                          name: client.name,
+                          role: "CLIENT",
+                        }}
+                        role="CLIENT"
+                      />
                       <EditUserDialog
                         user={{
                           id: client.id,
@@ -129,7 +138,7 @@ export default async function AdminClientsPage() {
                       />
                       <DeleteDialog
                         entityLabel={`client ${client.name}`}
-                        action={() => deleteUser(client.id)}
+                        action={deleteUser.bind(null, client.id)}
                         description={`This removes ${client.name} and any projects linked to them. Other users and audit history are preserved.`}
                       />
                     </div>
