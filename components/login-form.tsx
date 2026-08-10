@@ -1,10 +1,12 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Lock, Mail, AlertCircle } from "lucide-react";
+import { Lock, Mail, AlertCircle, Eye, EyeOff } from "lucide-react";
+import { GoogleIcon } from "@/components/google-icon";
 import { login, type LoginState } from "@/app/actions/auth";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -18,11 +20,13 @@ import {
 export function LoginForm() {
   const searchParams = useSearchParams();
   const next = searchParams.get("next");
+  const error = searchParams.get("error");
 
   const [state, formAction, pending] = useActionState<LoginState, FormData>(
     login,
     {}
   );
+  const [showPassword, setShowPassword] = useState(false);
 
   return (
     <Card className="w-full max-w-sm">
@@ -37,6 +41,16 @@ export function LoginForm() {
           <p className="mb-4 rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
             You need to sign in to view that page.
           </p>
+        )}
+        {error && (
+          <div className="mb-4 flex items-center gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            {error === "access_denied"
+              ? "Google sign-in was cancelled."
+              : error === "google_email_unverified"
+                ? "Please verify your Google email address."
+                : "Could not sign in with Google. Please try again."}
+          </div>
         )}
         <form action={formAction} className="space-y-4">
           <div className="space-y-2">
@@ -79,6 +93,21 @@ export function LoginForm() {
             {pending ? "Signing in..." : "Sign in"}
           </Button>
         </form>
+        <div className="relative my-4">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase text-muted-foreground">
+            <span className="bg-card px-2">or</span>
+          </div>
+        </div>
+        <a
+          href={`/api/auth/google?next=${encodeURIComponent(next ?? "/")}`}
+          className={cn(buttonVariants({ variant: "outline" }), "w-full")}
+        >
+          <GoogleIcon className="mr-2 h-4 w-4" />
+          Continue with Google
+        </a>
       </CardContent>
     </Card>
   );
