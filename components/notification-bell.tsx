@@ -3,7 +3,10 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Bell, CheckCheck } from "lucide-react";
-import { markAllNotificationsRead } from "@/app/actions/notifications";
+import {
+  markAllNotificationsRead,
+  markNotificationRead,
+} from "@/app/actions/notifications";
 import { cn } from "@/lib/utils";
 
 export type NotificationItem = {
@@ -11,14 +14,18 @@ export type NotificationItem = {
   message: string;
   readAt: string | null;
   createdAt: string;
+  projectId?: string | null;
+  type?: string;
 };
 
 export function NotificationBell({
   notifications,
   unreadCount,
+  role,
 }: {
   notifications: NotificationItem[];
   unreadCount: number;
+  role: "ADMIN" | "CONSULTANT" | "CLIENT";
 }) {
   const [open, setOpen] = useState(false);
   const router = useRouter();
@@ -28,6 +35,23 @@ export function NotificationBell({
     startTransition(async () => {
       await markAllNotificationsRead();
       router.refresh();
+    });
+  };
+
+  const openNotification = (id: string, projectId?: string | null) => {
+    startTransition(async () => {
+      await markNotificationRead(id);
+      router.refresh();
+      setOpen(false);
+      if (projectId) {
+        const target =
+          role === "CONSULTANT"
+            ? `/staff/projects/${projectId}`
+            : role === "ADMIN"
+              ? `/admin/projects`
+              : `/client`;
+        router.push(target);
+      }
     });
   };
 
@@ -72,19 +96,31 @@ export function NotificationBell({
                 </li>
               ) : (
                 notifications.map((n) => (
-                  <li
-                    key={n.id}
-                    className={cn(
-                      "px-3 py-2 text-sm",
-                      !n.readAt && "bg-muted/60"
-                    )}
-                  >
-                    <p className={cn(!n.readAt && "font-medium")}>
-                      {n.message}
-                    </p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {new Date(n.createdAt).toLocaleString()}
-                    </p>
+                  <li key={n.id}>
+                    <button
+                      type="button"
+                      onClick={() => openNotification(n.id, n.projectId)}
+                      className={cn(
+                        "flex w-full flex-col px-3 py-2 text-left text-sm transition-colors hover:bg-muted",
+                        !n.readAt && "bg-muted/60"
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "line-clamp-2",
+                          !n.readAt && "font-medium"
+                        )}
+                      >
+                        {n.message}
+                      </span>
+                      <span className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+                        {new Date(n.createdAt).toLocaleString()}
+                        {n.projectId && " · Open"}
+                        {!n.readAt && (
+                          <span className="ml-auto h-2 w-2 shrink-0 rounded-full bg-primary" />
+                        )}
+                      </span>
+                    </button>
                   </li>
                 ))
               )}

@@ -19,11 +19,13 @@ export function PortalNav({
   role,
   links,
   notifications = [],
+  userRole,
 }: {
   name: string;
   role: string;
   links: NavLink[];
   notifications?: NotificationItem[];
+  userRole?: "ADMIN" | "CONSULTANT" | "CLIENT";
 }) {
   const pathname = usePathname();
   const unreadCount = notifications.filter((n) => !n.readAt).length;
@@ -67,6 +69,7 @@ export function PortalNav({
           <NotificationBell
             notifications={notifications}
             unreadCount={unreadCount}
+            role={userRole ?? (role === "Administrator" ? "ADMIN" : role === "Consultant" ? "CONSULTANT" : "CLIENT")}
           />
           <div className="hidden text-right sm:block">
             <p className="text-sm font-medium leading-tight">{name}</p>

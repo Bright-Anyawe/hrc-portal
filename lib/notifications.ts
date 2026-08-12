@@ -9,7 +9,14 @@ export async function getNotifications(
     where: { userId },
     orderBy: { createdAt: "desc" },
     take: 15,
-    select: { id: true, message: true, readAt: true, createdAt: true },
+    select: {
+      id: true,
+      message: true,
+      readAt: true,
+      createdAt: true,
+      projectId: true,
+      type: true,
+    },
   });
 
   return rows.map((n) => ({
@@ -17,5 +24,7 @@ export async function getNotifications(
     message: n.message,
     readAt: n.readAt?.toISOString() ?? null,
     createdAt: n.createdAt.toISOString(),
+    projectId: n.projectId,
+    type: n.type,
   }));
 }
