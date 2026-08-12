@@ -15,8 +15,14 @@ export default async function StaffLayout({
       <PortalNav
         name={session.name}
         role="Consultant"
+        userRole="CONSULTANT"
         notifications={notifications}
-        links={[{ href: "/staff", label: "My Clients" }]}
+        links={[{
+          href: "/staff",
+          label: "My Clients",
+        },
+        { href: "/settings", label: "Settings" },
+      ]}
       />
       <main className="mx-auto max-w-6xl px-4 py-8 md:px-6">{children}</main>
     </div>

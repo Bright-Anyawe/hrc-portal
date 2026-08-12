@@ -341,6 +341,16 @@ export async function createProject(
     },
   });
 
+  if (consultantId) {
+    await prisma.clientAssignment.upsert({
+      where: {
+        consultantId_clientId: { consultantId, clientId },
+      },
+      update: {},
+      create: { consultantId, clientId },
+    });
+  }
+
   await logAudit({
     actorId: session.sub,
     actorName: session.name,
@@ -402,6 +412,16 @@ export async function updateProject(
       consultantId,
     },
   });
+
+  if (consultantId) {
+    await prisma.clientAssignment.upsert({
+      where: {
+        consultantId_clientId: { consultantId, clientId },
+      },
+      update: {},
+      create: { consultantId, clientId },
+    });
+  }
 
   await logAudit({
     actorId: session.sub,

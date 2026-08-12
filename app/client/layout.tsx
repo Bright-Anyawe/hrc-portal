@@ -15,8 +15,14 @@ export default async function ClientLayout({
       <PortalNav
         name={session.name}
         role="Client"
+        userRole="CLIENT"
         notifications={notifications}
-        links={[{ href: "/client", label: "Dashboard" }]}
+        links={[{
+          href: "/client",
+          label: "Dashboard",
+        },
+        { href: "/settings", label: "Settings" },
+      ]}
       />
       <main className="mx-auto max-w-6xl px-4 py-8 md:px-6">{children}</main>
     </div>

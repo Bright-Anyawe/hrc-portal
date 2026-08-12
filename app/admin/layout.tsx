@@ -15,6 +15,7 @@ export default async function AdminLayout({
       <PortalNav
         name={session.name}
         role="Administrator"
+        userRole="ADMIN"
         notifications={notifications}
         links={[
           { href: "/admin", label: "Overview" },
@@ -22,6 +23,7 @@ export default async function AdminLayout({
           { href: "/admin/consultants", label: "Consultants" },
           { href: "/admin/projects", label: "Projects" },
           { href: "/admin/audit", label: "Audit log" },
+          { href: "/settings", label: "Settings" },
         ]}
       />
       <main className="mx-auto max-w-6xl px-4 py-8 md:px-6">{children}</main>
