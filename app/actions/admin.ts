@@ -8,6 +8,7 @@ import { requireRole } from "@/lib/rbac";
 import { sendMail } from "@/lib/mailer";
 import { logAudit } from "@/lib/audit";
 import { notify } from "@/lib/notify";
+import { createDraftInvoiceForCompletedProject } from "@/lib/invoices";
 import type { Role, ProjectStatus } from "@/generated/prisma/enums";
 
 export type ActionResult = {
@@ -431,6 +432,14 @@ export async function updateProject(
     entityId: id,
     details: { title, status, clientId, consultantId },
   });
+
+  if (status === "COMPLETED") {
+    await createDraftInvoiceForCompletedProject({
+      id,
+      clientId,
+      title,
+    });
+  }
 
   revalidatePath("/admin");
   revalidatePath("/admin/projects");

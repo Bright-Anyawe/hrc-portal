@@ -1,7 +1,15 @@
 import Link from "next/link";
-import { Users, Briefcase, FolderKanban, CheckCircle2 } from "lucide-react";
+import {
+  Users,
+  Briefcase,
+  FolderKanban,
+  CheckCircle2,
+  Receipt,
+  AlertTriangle,
+} from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/rbac";
+import { formatCents, invoiceTotalCents } from "@/lib/invoices";
 import {
   Card,
   CardContent,
@@ -23,7 +31,7 @@ import { STATUS_LABEL, STATUS_VARIANT } from "@/lib/status";
 export default async function AdminOverviewPage() {
   await requireRole(["ADMIN"]);
 
-  const [clientCount, consultantCount, projectCount, activeCount, recentProjects] =
+  const [clientCount, consultantCount, projectCount, activeCount, recentProjects, outstanding, paidInvoices] =
     await Promise.all([
       prisma.user.count({ where: { role: "CLIENT" } }),
       prisma.user.count({ where: { role: "CONSULTANT" } }),
@@ -37,13 +45,37 @@ export default async function AdminOverviewPage() {
           consultant: { select: { name: true } },
         },
       }),
+      prisma.invoice.findMany({
+        where: { status: "SENT" },
+        orderBy: { dueDate: "asc" },
+        include: {
+          project: { select: { title: true } },
+          client: { select: { name: true } },
+          lines: true,
+        },
+      }),
+      prisma.invoice.findMany({
+        where: { status: "PAID" },
+        include: { lines: true },
+      }),
     ]);
+
+  const now = new Date();
+  const overdue = outstanding.filter(
+    (inv) => inv.dueDate && inv.dueDate < now
+  );
+  const outstandingTotal = invoiceTotalCents(
+    outstanding.flatMap((inv) => inv.lines)
+  );
+  const paidTotal = invoiceTotalCents(paidInvoices.flatMap((i) => i.lines));
 
   const stats = [
     { label: "Clients", value: clientCount, icon: Users },
     { label: "Consultants", value: consultantCount, icon: Briefcase },
     { label: "Projects", value: projectCount, icon: FolderKanban },
     { label: "Active projects", value: activeCount, icon: CheckCircle2 },
+    { label: "Outstanding", value: formatCents(outstandingTotal), icon: Receipt },
+    { label: "Overdue", value: overdue.length, icon: AlertTriangle },
   ];
 
   return (
@@ -55,7 +87,7 @@ export default async function AdminOverviewPage() {
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {stats.map((stat) => (
           <Card key={stat.label}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -70,6 +102,86 @@ export default async function AdminOverviewPage() {
           </Card>
         ))}
       </div>
+
+      <p className="text-sm text-muted-foreground">
+        Collected to date:{" "}
+        <span className="font-semibold text-foreground">
+          {formatCents(paidTotal)}
+        </span>
+      </p>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Outstanding invoices</CardTitle>
+          <Link
+            href="/admin/invoices"
+            className="text-sm text-primary hover:underline"
+          >
+            View all
+          </Link>
+        </CardHeader>
+        <CardContent className="pt-0">
+          {outstanding.length === 0 ? (
+            <p className="py-8 text-center text-sm text-muted-foreground">
+              No outstanding invoices. All sent invoices have been paid.
+            </p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Invoice</TableHead>
+                  <TableHead>Project</TableHead>
+                  <TableHead>Client</TableHead>
+                  <TableHead>Due</TableHead>
+                  <TableHead className="text-right">Total</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {outstanding.map((invoice) => {
+                  const isOverdue = invoice.dueDate && invoice.dueDate < now;
+                  return (
+                    <TableRow key={invoice.id}>
+                      <TableCell className="font-medium">
+                        <Link
+                          href={`/admin/invoices/${invoice.id}`}
+                          className="text-primary hover:underline"
+                        >
+                          {invoice.number}
+                        </Link>
+                      </TableCell>
+                      <TableCell className="max-w-xs">
+                        <span className="line-clamp-1">
+                          {invoice.project.title}
+                        </span>
+                      </TableCell>
+                      <TableCell>{invoice.client.name}</TableCell>
+                      <TableCell>
+                        {invoice.dueDate ? (
+                          <span
+                            className={
+                              isOverdue
+                                ? "font-medium text-destructive"
+                                : undefined
+                            }
+                          >
+                            {invoice.dueDate.toLocaleDateString()}
+                            {isOverdue && " (overdue)"}
+                          </span>
+                        ) : (
+                          "—"
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        {formatCents(invoiceTotalCents(invoice.lines))}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">

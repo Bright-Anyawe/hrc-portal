@@ -22,6 +22,13 @@ enum ProjectStatus {
   COMPLETED
 }
 
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  CANCELLED
+}
+
 model User {
   id           String   @id @default(cuid())
   name         String
@@ -38,6 +45,7 @@ model User {
   projectsAsConsultant  Project[]          @relation("ProjectsConsultant")
   projectsAsClient      Project[]          @relation("ProjectsClient")
   documentsUploaded     Document[]         @relation("DocumentsUploaded")
+  invoicesForClient     Invoice[]          @relation("InvoicesForClient")
   notifications         Notification[]
   auditLogs             AuditLog[]
 
@@ -76,6 +84,7 @@ model Project {
   tasks      Task[]
   documents  Document[]
   notifications Notification[]
+  invoices   Invoice[]
 
   @@index([clientId])
   @@index([consultantId])
@@ -141,4 +150,39 @@ model AuditLog {
 
   @@index([entityType, entityId])
   @@map("audit_logs")
+}
+
+model Invoice {
+  id        String        @id @default(cuid())
+  number    String        @unique
+  projectId String
+  clientId  String
+  status    InvoiceStatus @default(DRAFT)
+  note      String?
+  dueDate   DateTime?
+  sentAt    DateTime?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  project Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  client  User                @relation("InvoicesForClient", fields: [clientId], references: [id])
+  lines   InvoiceLineItem[]
+
+  @@index([projectId])
+  @@index([clientId])
+  @@index([status])
+  @@map("invoices")
+}
+
+model InvoiceLineItem {
+  id            String @id @default(cuid())
+  invoiceId     String
+  description   String
+  quantity      Int    @default(1)
+  unitPriceCents Int   @default(0)
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@map("invoice_line_items")
 }

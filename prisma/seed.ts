@@ -107,6 +107,38 @@ async function main() {
     console.log("Created linked project:", project.title);
   }
 
+  const existingCompleted = await prisma.project.findFirst({
+    where: { title: "Portfolio Hedging Strategy Review" },
+  });
+
+  if (!existingCompleted) {
+    const completed = await prisma.project.create({
+      data: {
+        title: "Portfolio Hedging Strategy Review",
+        description:
+          "Completed quarterly hedging review and option overlay recommendations for Northwind Trading.",
+        status: "COMPLETED",
+        createdById: admin.id,
+        consultantId: consultant.id,
+        clientId: client.id,
+      },
+    });
+
+    const year = new Date().getFullYear();
+    const count = await prisma.invoice.count({
+      where: { number: { startsWith: `HRC-${year}-` } },
+    });
+    await prisma.invoice.create({
+      data: {
+        number: `HRC-${year}-${String(count + 1).padStart(4, "0")}`,
+        projectId: completed.id,
+        clientId: client.id,
+      },
+    });
+
+    console.log("Created completed project + invoice draft:", completed.title);
+  }
+
   console.log("Seed complete:");
   console.log("  Admin       - admin@hrc.com / admin123");
   console.log("  Consultant  - consultant@hrc.com / consultant123");

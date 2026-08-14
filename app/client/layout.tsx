@@ -21,6 +21,7 @@ export default async function ClientLayout({
           href: "/client",
           label: "Dashboard",
         },
+        { href: "/client/invoices", label: "Invoices" },
         { href: "/settings", label: "Settings" },
       ]}
       />

@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
 import { notify } from "@/lib/notify";
+import { createDraftInvoiceForCompletedProject } from "@/lib/invoices";
 import { STATUS_LABEL } from "@/lib/status";
 import type { ProjectStatus } from "@/generated/prisma/enums";
 
@@ -90,6 +91,14 @@ export async function updateProjectStatus(
     type: "PROJECT_STATUS",
     message: `The status of "${project.title}" changed to ${STATUS_LABEL[status]}.`,
   });
+
+  if (status === "COMPLETED") {
+    await createDraftInvoiceForCompletedProject({
+      id: projectId,
+      clientId: project.clientId,
+      title: project.title,
+    });
+  }
 
   revalidatePath(`/staff/projects/${projectId}`);
   return { ok: true };
