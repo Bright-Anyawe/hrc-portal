@@ -108,9 +108,9 @@ export default async function StaffPage() {
                         href={`/staff/projects/${project.id}`}
                         className="group block rounded-lg border p-4 transition-colors hover:bg-muted/40"
                       >
-                        <div className="flex items-center justify-between gap-3">
-                          <div>
-                            <p className="font-medium group-hover:text-primary">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate font-medium group-hover:text-primary">
                               {project.title}
                             </p>
                             <p className="mt-0.5 text-xs text-muted-foreground">

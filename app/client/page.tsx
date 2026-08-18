@@ -129,7 +129,7 @@ export default async function ClientDashboardPage() {
               return (
                 <Card key={project.id} className="flex flex-col">
                   <CardHeader>
-                    <div className="flex items-start justify-between gap-2">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
                       <CardTitle className="text-lg">{project.title}</CardTitle>
                       <Badge variant={STATUS_VARIANT[project.status]}>
                         {STATUS_LABEL[project.status]}

@@ -4,45 +4,45 @@
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --background: #ffffff;
+  --foreground: #2b2b2b;
+  --card: #ffffff;
+  --card-foreground: #2b2b2b;
+  --popover: #ffffff;
+  --popover-foreground: #2b2b2b;
+  --primary: #e31b23;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f4f8;
+  --secondary-foreground: #0a2540;
+  --muted: #f1f4f8;
+  --muted-foreground: #5b6574;
+  --accent: #eef4fb;
+  --accent-foreground: #0a2540;
+  --destructive: #dc2626;
+  --border: #e3e8ef;
+  --input: #d5dbe4;
+  --ring: #00aeef;
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --background: #0a2540;
+  --foreground: #f5f7fa;
+  --card: #102c4d;
+  --card-foreground: #f5f7fa;
+  --popover: #102c4d;
+  --popover-foreground: #f5f7fa;
+  --primary: #e31b23;
+  --primary-foreground: #ffffff;
+  --secondary: #1a3a5f;
+  --secondary-foreground: #f5f7fa;
+  --muted: #163253;
+  --muted-foreground: #9aa8ba;
+  --accent: #1a3a5f;
+  --accent-foreground: #f5f7fa;
+  --destructive: #f87171;
+  --border: rgb(255 255 255 / 12%);
+  --input: rgb(255 255 255 / 18%);
+  --ring: #00aeef;
 }
 
 @theme inline {
@@ -68,6 +68,13 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+
+  --color-brand-red: #e31b23;
+  --color-brand-sky: #00aeef;
+  --color-brand-navy: #0a2540;
+  --color-brand-navy-light: #16385f;
+  --color-brand-gold: #da9100;
+  --color-brand-charcoal: #2b2b2b;
 }
 
 dialog::backdrop {

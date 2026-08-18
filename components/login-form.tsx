@@ -2,7 +2,14 @@
 
 import { useActionState, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Lock, Mail, AlertCircle, Eye, EyeOff } from "lucide-react";
+import {
+  Lock,
+  Mail,
+  AlertCircle,
+  Eye,
+  EyeOff,
+  ShieldCheck,
+} from "lucide-react";
 import { GoogleIcon } from "@/components/google-icon";
 import { login, type LoginState } from "@/app/actions/auth";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -29,9 +36,13 @@ export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <Card className="w-full max-w-sm">
-      <CardHeader>
-        <CardTitle>Sign in</CardTitle>
+    <Card className="w-full max-w-md border-white/50 bg-white shadow-2xl">
+      <CardHeader className="border-b bg-muted/40">
+        <span className="mb-2 inline-flex w-fit items-center gap-1.5 rounded-full bg-brand-red/10 px-2.5 py-0.5 text-xs font-semibold text-brand-red">
+          <ShieldCheck className="h-3.5 w-3.5" />
+          Secure sign in
+        </span>
+        <CardTitle className="text-2xl">Welcome back</CardTitle>
         <CardDescription>
           Enter your credentials to access your portal.
         </CardDescription>
