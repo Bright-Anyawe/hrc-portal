@@ -42,14 +42,19 @@ function buildPdf(
     const BOTTOM = doc.page.height - 50;
     const CONTENT_WIDTH = RIGHT - LEFT;
 
-    const colDescriptionX = 50;
-    const colDescriptionW = 270;
-    const colQtyX = 335;
-    const colQtyW = 45;
-    const colPriceX = 385;
-    const colPriceW = 80;
-    const colAmountX = 470;
-    const colAmountW = 75;
+    // Keep ~5pt right breathing room so right-aligned amount never clips at the edge
+    const colDescriptionX = LEFT;
+    const colDescriptionW = 260;
+    const colQtyX = 325;
+    const colQtyW = 40;
+    const colPriceX = 375;
+    const colPriceW = 75;
+    const colAmountX = 460;
+    const colAmountW = 80;
+
+    // Right header block — explicit width prevents text starting at RIGHT edge from overflowing
+    const HEADER_RIGHT_W = 185;
+    const HEADER_RIGHT_X = RIGHT - HEADER_RIGHT_W;
 
     const FOOTER_RESERVE = 28;
 
@@ -60,18 +65,20 @@ function buildPdf(
 
     function drawHeader() {
       doc.fontSize(20).font("Helvetica-Bold").fillColor("#111827");
-      doc.text("Hedge Resource Centre", LEFT, 50);
+      doc.text("Hedge Resource Centre", LEFT, 50, { width: CONTENT_WIDTH - HEADER_RIGHT_W - 12 });
       doc.fontSize(10).font("Helvetica").fillColor("#6b7280");
-      doc.text("Consulting & Risk Advisory", LEFT, 74);
-      doc.text(`INVOICE`, RIGHT, 50, { align: "right" });
+      doc.text("Consulting & Risk Advisory", LEFT, 74, { width: CONTENT_WIDTH - HEADER_RIGHT_W - 12 });
+      doc.text(`INVOICE`, HEADER_RIGHT_X, 50, { width: HEADER_RIGHT_W, align: "right" });
       doc.fontSize(10).fillColor("#111827");
-      doc.text(invoice.number, RIGHT, 68, { align: "right" });
+      doc.text(invoice.number, HEADER_RIGHT_X, 68, { width: HEADER_RIGHT_W, align: "right" });
       doc.fillColor("#6b7280");
-      doc.text(`Issued: ${invoice.createdAt.toLocaleDateString()}`, RIGHT, 84, {
+      doc.text(`Issued: ${invoice.createdAt.toLocaleDateString()}`, HEADER_RIGHT_X, 84, {
+        width: HEADER_RIGHT_W,
         align: "right",
       });
       if (invoice.dueDate) {
-        doc.text(`Due: ${invoice.dueDate.toLocaleDateString()}`, RIGHT, 98, {
+        doc.text(`Due: ${invoice.dueDate.toLocaleDateString()}`, HEADER_RIGHT_X, 98, {
+          width: HEADER_RIGHT_W,
           align: "right",
         });
       }
@@ -92,7 +99,10 @@ function buildPdf(
         INVOICE_STATUS_LABEL[invoice.status as keyof typeof INVOICE_STATUS_LABEL] ??
         invoice.status;
       doc.fillColor("#059669").font("Helvetica-Bold");
-      doc.text(statusLabel.toUpperCase(), RIGHT, 134, { align: "right" });
+      doc.text(statusLabel.toUpperCase(), HEADER_RIGHT_X, 134, {
+        width: HEADER_RIGHT_W,
+        align: "right",
+      });
 
       doc.moveTo(LEFT, 208).lineTo(RIGHT, 208).lineWidth(1).strokeColor("#e5e7eb").stroke();
     }
