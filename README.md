@@ -104,7 +104,7 @@ See `.env.example` for all variables with explanations:
 | `PORTAL_URL` | Public base URL, used in invitation emails |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` | Optional SMTP settings; without them, invitation emails are logged to the console |
 | `PAYSTACK_SECRET_KEY` | Paystack secret key (`sk_test_...` in test mode, `sk_live_...` in live mode). Server-side only — never exposed to the browser. Switching test ↔ live is swapping this key |
-| `PAYSTACK_CURRENCY` | Currency invoices are billed in (default `USD`). Paystack charges in the currency's smallest unit, which maps 1:1 to the invoice's stored cents for USD |
+| `PAYSTACK_CURRENCY` | Currency invoices are billed in (default `GHS`). Paystack charges in the currency's smallest unit (pesewas for GHS), which maps 1:1 to the invoice's stored pesewas/cents for GHS |
 
 ## Scripts
 

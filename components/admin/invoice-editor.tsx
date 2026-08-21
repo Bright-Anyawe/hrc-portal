@@ -16,7 +16,7 @@ type Line = {
   unitPriceCents: number;
 };
 
-function formatDollars(cents: number): string {
+function formatCedis(cents: number): string {
   return (cents / 100).toFixed(2);
 }
 
@@ -114,14 +114,14 @@ export function InvoiceEditor({
               min={0}
               step="0.01"
               name={`unitPrice_${i}`}
-              value={formatDollars(line.unitPriceCents)}
+              value={formatCedis(line.unitPriceCents)}
               onChange={(e) =>
                 updateLine(i, {
                   unitPriceCents: Math.round(Number(e.target.value) * 100),
                 })
               }
               className="col-span-6 sm:col-span-3"
-              aria-label="Unit price (USD)"
+              aria-label="Unit price (GHS)"
             />
             <div className="col-span-3 flex justify-end sm:col-span-1">
               <Button

@@ -4,9 +4,9 @@ import { createHmac } from "crypto";
 const PAYSTACK_BASE_URL = "https://api.paystack.co";
 
 // Currency invoices are billed in. Paystack charges in the currency's smallest
-// unit (cents for USD, kobo for NGN, pesewas for GHS, cents for ZAR/KES).
-// Invoice totals are stored as cents, so they map 1:1 for "USD".
-export const PAYSTACK_CURRENCY = process.env.PAYSTACK_CURRENCY ?? "USD";
+// unit (pesewas for GHS, kobo for NGN, cents for USD/ZAR/KES).
+// Invoice totals are stored as pesewas (cents), so they map 1:1 for "GHS".
+export const PAYSTACK_CURRENCY = process.env.PAYSTACK_CURRENCY ?? "GHS";
 
 export class PaystackError extends Error {
   constructor(
