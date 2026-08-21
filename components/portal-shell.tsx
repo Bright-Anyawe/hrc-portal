@@ -290,6 +290,24 @@ export function PortalShell({
                 </Button>
               </div>
               <NavList onNavigate={() => setMobileOpen(false)} />
+              <div className="border-t">
+                <Link
+                  href="/settings"
+                  className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                >
+                  <Settings className="h-[18px] w-[18px]" />
+                  Settings
+                </Link>
+                <form action={logout} className="border-t">
+                  <button
+                    type="submit"
+                    className="flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-destructive transition-colors hover:bg-destructive/5"
+                  >
+                    <LogOut className="h-[18px] w-[18px]" />
+                    Sign out
+                  </button>
+                </form>
+              </div>
               <UserCard />
             </aside>
           </div>
