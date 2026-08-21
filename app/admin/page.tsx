@@ -6,6 +6,9 @@ import {
   CheckCircle2,
   Receipt,
   AlertTriangle,
+  UserPlus,
+  PlusCircle,
+  ArrowUpRight,
 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/rbac";
@@ -17,6 +20,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { StatCard } from "@/components/stat-card";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   Table,
   TableBody,
@@ -26,10 +31,18 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback, getInitials } from "@/components/ui/avatar";
+import { PortalHero } from "@/components/portal-hero";
 import { STATUS_LABEL, STATUS_VARIANT } from "@/lib/status";
 
+function greeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
+}
+
 export default async function AdminOverviewPage() {
-  await requireRole(["ADMIN"]);
+  const session = await requireRole(["ADMIN"]);
 
   const [clientCount, consultantCount, projectCount, activeCount, recentProjects, outstanding, paidInvoices] =
     await Promise.all([
@@ -70,61 +83,126 @@ export default async function AdminOverviewPage() {
   const paidTotal = invoiceTotalCents(paidInvoices.flatMap((i) => i.lines));
 
   const stats = [
-    { label: "Clients", value: clientCount, icon: Users },
-    { label: "Consultants", value: consultantCount, icon: Briefcase },
-    { label: "Projects", value: projectCount, icon: FolderKanban },
-    { label: "Active projects", value: activeCount, icon: CheckCircle2 },
-    { label: "Outstanding", value: formatCents(outstandingTotal), icon: Receipt },
-    { label: "Overdue", value: overdue.length, icon: AlertTriangle },
+    {
+      label: "Clients",
+      value: clientCount,
+      icon: Users,
+      iconClassName: "bg-brand-sky/15 text-brand-sky",
+      footer: "Active client accounts",
+    },
+    {
+      label: "Consultants",
+      value: consultantCount,
+      icon: Briefcase,
+      iconClassName: "bg-brand-navy/10 text-brand-navy",
+      footer: "Staff delivering work",
+    },
+    {
+      label: "Projects",
+      value: projectCount,
+      icon: FolderKanban,
+      iconClassName: "bg-brand-red/10 text-brand-red",
+      footer: "Across all engagements",
+    },
+    {
+      label: "Active projects",
+      value: activeCount,
+      icon: CheckCircle2,
+      iconClassName: "bg-emerald-600/10 text-emerald-600",
+      footer: "Currently in delivery",
+    },
+    {
+      label: "Outstanding",
+      value: formatCents(outstandingTotal),
+      icon: Receipt,
+      iconClassName: "bg-brand-gold/15 text-brand-gold",
+      footer: "Sent but unpaid",
+    },
+    {
+      label: "Overdue",
+      value: overdue.length,
+      icon: AlertTriangle,
+      iconClassName: "bg-destructive/10 text-destructive",
+      footer: "Past due date",
+    },
   ];
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Admin overview</h1>
-        <p className="text-sm text-muted-foreground">
-          Manage consultants, clients, assignments and projects.
-        </p>
-      </div>
+      <PortalHero
+        tone="admin"
+        eyebrow={greeting()}
+        title={session.name}
+        description="Manage consultants, clients, projects and invoicing from one place."
+        split
+        actions={
+          <>
+            <Link
+              href="/admin/clients"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-brand-red px-3.5 py-2 text-sm font-medium text-white shadow-md transition-all hover:bg-brand-red/90 hover:shadow-lg active:scale-95 motion-reduce:active:scale-100"
+            >
+              <UserPlus className="h-4 w-4" />
+              Invite client
+            </Link>
+            <Link
+              href="/admin/projects"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-white/15 px-3.5 py-2 text-sm font-medium text-white backdrop-blur transition-all hover:bg-white/25 active:scale-95 motion-reduce:active:scale-100"
+            >
+              <PlusCircle className="h-4 w-4" />
+              New project
+            </Link>
+            <Link
+              href="/admin/invoices"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-white/15 px-3.5 py-2 text-sm font-medium text-white backdrop-blur transition-all hover:bg-white/25 active:scale-95 motion-reduce:active:scale-100"
+            >
+              <Receipt className="h-4 w-4" />
+              Review invoices
+            </Link>
+          </>
+        }
+      />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        {stats.map((stat) => (
-          <Card key={stat.label}>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {stat.label}
-              </CardTitle>
-              <stat.icon className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold">{stat.value}</p>
-            </CardContent>
-          </Card>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+        {stats.map((stat, i) => (
+          <StatCard
+            key={stat.label}
+            label={stat.label}
+            value={stat.value}
+            icon={stat.icon}
+            iconClassName={stat.iconClassName}
+            footer={stat.footer}
+            delay={i * 50}
+          />
         ))}
       </div>
 
-      <p className="text-sm text-muted-foreground">
-        Collected to date:{" "}
-        <span className="font-semibold text-foreground">
-          {formatCents(paidTotal)}
-        </span>
-      </p>
+      <div className="flex items-center justify-between rounded-xl border border-brand-gold/30 bg-brand-gold/5 px-4 py-3 text-sm">
+        <p className="text-foreground">
+          Collected to date:{" "}
+          <span className="font-semibold text-brand-navy">
+            {formatCents(paidTotal)}
+          </span>
+        </p>
+      </div>
 
-      <Card>
+      <Card className="overflow-hidden">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Outstanding invoices</CardTitle>
           <Link
             href="/admin/invoices"
-            className="text-sm text-primary hover:underline"
+            className="inline-flex items-center gap-1 text-sm font-medium text-primary transition-colors hover:underline"
           >
             View all
+            <ArrowUpRight className="h-4 w-4" />
           </Link>
         </CardHeader>
         <CardContent className="pt-0">
           {outstanding.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">
-              No outstanding invoices. All sent invoices have been paid.
-            </p>
+            <EmptyState
+              icon={CheckCircle2}
+              title="No outstanding invoices"
+              description="All sent invoices have been paid. Great work keeping things on track."
+            />
           ) : (
             <Table>
               <TableHeader>
@@ -140,7 +218,7 @@ export default async function AdminOverviewPage() {
                 {outstanding.map((invoice) => {
                   const isOverdue = invoice.dueDate && invoice.dueDate < now;
                   return (
-                    <TableRow key={invoice.id}>
+                    <TableRow key={invoice.id} className="transition-colors">
                       <TableCell className="font-medium">
                         <Link
                           href={`/admin/invoices/${invoice.id}`}
@@ -183,21 +261,33 @@ export default async function AdminOverviewPage() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="overflow-hidden">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Recent projects</CardTitle>
           <Link
             href="/admin/projects"
-            className="text-sm text-primary hover:underline"
+            className="inline-flex items-center gap-1 text-sm font-medium text-primary transition-colors hover:underline"
           >
             View all
+            <ArrowUpRight className="h-4 w-4" />
           </Link>
         </CardHeader>
         <CardContent className="pt-0">
           {recentProjects.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">
-              No projects yet. Create your first project.
-            </p>
+            <EmptyState
+              icon={FolderKanban}
+              title="No projects yet"
+              description="Create your first project to get started."
+              action={
+                <Link
+                  href="/admin/projects"
+                  className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition-all hover:bg-primary/90 active:scale-95 motion-reduce:active:scale-100"
+                >
+                  <PlusCircle className="h-4 w-4" />
+                  New project
+                </Link>
+              }
+            />
           ) : (
             <Table>
               <TableHeader>
@@ -210,7 +300,7 @@ export default async function AdminOverviewPage() {
               </TableHeader>
               <TableBody>
                 {recentProjects.map((project) => (
-                  <TableRow key={project.id}>
+                  <TableRow key={project.id} className="transition-colors">
                     <TableCell className="font-medium">
                       {project.title}
                     </TableCell>

@@ -13,9 +13,11 @@ function Progress({
       {...props}
     >
       <div
-        className="h-full rounded-full bg-primary transition-all"
+        className="relative h-full overflow-hidden rounded-full bg-gradient-to-r from-brand-sky to-brand-navy transition-[width] duration-700 ease-out motion-reduce:transition-none"
         style={{ width: `${Math.min(100, Math.max(0, value ?? 0))}%` }}
-      />
+      >
+        <span className="absolute inset-0 animate-progress-stripes rounded-full opacity-60 motion-reduce:hidden" />
+      </div>
     </div>
   );
 }

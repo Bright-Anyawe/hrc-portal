@@ -65,7 +65,7 @@ function UserForm({
   if (state.ok && state.email && state.password) {
     return (
       <div className="space-y-4">
-        <div className="flex items-center gap-2 rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200">
+        <div className="animate-fade-in-up flex items-center gap-2 rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200">
           <KeyRound className="h-4 w-4 shrink-0" />
           {roleLabel} created. Share these sign-in credentials.
         </div>
@@ -102,7 +102,7 @@ function UserForm({
         />
       </div>
       {state.error && (
-        <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+        <p className="animate-fade-in-up rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {state.error}
         </p>
       )}
@@ -110,7 +110,7 @@ function UserForm({
         <Button type="button" variant="outline" onClick={onClose}>
           Cancel
         </Button>
-        <Button type="submit" disabled={pending}>
+        <Button type="submit" loading={pending}>
           {pending ? "Creating..." : `Create ${roleLabel}`}
         </Button>
       </div>

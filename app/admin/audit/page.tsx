@@ -2,6 +2,7 @@ import { ScrollText } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/rbac";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   Card,
   CardContent,
@@ -16,6 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { PageHeader } from "@/components/page-header";
 
 const ACTION_LABEL: Record<string, string> = {
   USER_INVITED: "User invited",
@@ -57,12 +59,10 @@ export default async function AdminAuditPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Audit log</h1>
-        <p className="text-sm text-muted-foreground">
-          Track administrative and project actions across the portal.
-        </p>
-      </div>
+      <PageHeader
+        title="Audit log"
+        description="Track administrative and project actions across the portal."
+      />
 
       <Card>
         <CardHeader>
@@ -73,9 +73,11 @@ export default async function AdminAuditPage() {
         </CardHeader>
         <CardContent className="pt-0">
           {logs.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">
-              No recorded activity yet.
-            </p>
+            <EmptyState
+              icon={ScrollText}
+              title="No recorded activity yet"
+              description="Administrative and project actions will be logged here."
+            />
           ) : (
             <Table>
               <TableHeader>

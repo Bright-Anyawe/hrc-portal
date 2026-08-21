@@ -1,13 +1,30 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import { notifyAdmins } from "@/lib/notify";
-import type { InvoiceStatus } from "@/generated/prisma/enums";
+import type { InvoiceStatus, PaymentStatus } from "@/generated/prisma/enums";
 
 export const INVOICE_STATUS_LABEL: Record<InvoiceStatus, string> = {
   DRAFT: "Draft",
   SENT: "Sent",
   PAID: "Paid",
   CANCELLED: "Cancelled",
+};
+
+export const PAYMENT_STATUS_LABEL: Record<PaymentStatus, string> = {
+  PENDING: "Pending",
+  SUCCESS: "Successful",
+  FAILED: "Failed",
+  CANCELLED: "Cancelled",
+};
+
+export const PAYMENT_STATUS_VARIANT: Record<
+  PaymentStatus,
+  "default" | "warning" | "success" | "outline" | "destructive"
+> = {
+  PENDING: "warning",
+  SUCCESS: "success",
+  FAILED: "destructive",
+  CANCELLED: "outline",
 };
 
 export const INVOICE_STATUS_VARIANT: Record<

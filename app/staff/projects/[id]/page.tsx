@@ -15,6 +15,7 @@ import { ProjectStatusSelect } from "@/components/staff/project-status-select";
 import { DocumentUpload } from "@/components/document-upload";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, getInitials } from "@/components/ui/avatar";
@@ -130,9 +131,11 @@ export default async function StaffProjectPage({
         </CardHeader>
         <CardContent className="space-y-4">
           {taskItems.length === 0 ? (
-            <p className="py-6 text-center text-sm text-muted-foreground">
-              No tasks yet. Add the first milestone below.
-            </p>
+            <EmptyState
+              icon={ClipboardList}
+              title="No tasks yet"
+              description="Add the first milestone for this project below."
+            />
           ) : (
             <div className="space-y-2">
               {taskItems.map((task) => (
@@ -175,9 +178,11 @@ export default async function StaffProjectPage({
           <DocumentUpload projectId={project.id} />
 
           {project.documents.length === 0 ? (
-            <p className="rounded-md border border-dashed py-6 text-center text-sm text-muted-foreground">
-              No documents shared yet.
-            </p>
+            <EmptyState
+              icon={FolderOpen}
+              title="No documents shared yet"
+              description="Upload deliverables and your client will see them instantly."
+            />
           ) : (
             <ul className="space-y-1.5">
               {project.documents.map((doc) => (
@@ -185,7 +190,7 @@ export default async function StaffProjectPage({
                   <a
                     href={doc.fileUrl}
                     download
-                    className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm transition-colors hover:bg-muted/50"
+                    className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm transition-all hover:border-ring/40 hover:bg-muted/50 active:scale-[0.99] motion-reduce:active:scale-100"
                   >
                     <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
                     <span className="flex-1 truncate font-medium">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { AlertCircle, Check, Eye, EyeOff, Lock, ShieldCheck } from "lucide-react";
+import { Eye, EyeOff, Lock, ShieldCheck } from "lucide-react";
 import {
   changePassword,
   type ChangePasswordState,
@@ -9,6 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { FormAlert } from "@/components/ui/form-alert";
 
 export function PasswordForm({ hasPassword }: { hasPassword: boolean }) {
   const [state, formAction, pending] = useActionState<
@@ -22,17 +23,11 @@ export function PasswordForm({ hasPassword }: { hasPassword: boolean }) {
   return (
     <form action={formAction} className="space-y-4">
       {state.ok && (
-        <p className="flex items-center gap-2 rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200">
-          <Check className="h-4 w-4 shrink-0" />
+        <FormAlert variant="success">
           Password updated. Use it the next time you sign in.
-        </p>
+        </FormAlert>
       )}
-      {state.error && (
-        <p className="flex items-center gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          <AlertCircle className="h-4 w-4 shrink-0" />
-          {state.error}
-        </p>
-      )}
+      {state.error && <FormAlert variant="error">{state.error}</FormAlert>}
 
       {hasPassword && (
         <div className="space-y-2">
@@ -122,7 +117,7 @@ export function PasswordForm({ hasPassword }: { hasPassword: boolean }) {
         </div>
       </div>
 
-      <Button type="submit" disabled={pending}>
+      <Button type="submit" loading={pending}>
         {pending ? "Updating..." : "Update password"}
       </Button>
     </form>

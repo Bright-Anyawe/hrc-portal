@@ -29,6 +29,13 @@ enum InvoiceStatus {
   CANCELLED
 }
 
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  CANCELLED
+}
+
 model User {
   id           String   @id @default(cuid())
   name         String
@@ -167,6 +174,7 @@ model Invoice {
   project Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
   client  User                @relation("InvoicesForClient", fields: [clientId], references: [id])
   lines   InvoiceLineItem[]
+  payments Payment[]
 
   @@index([projectId])
   @@index([clientId])
@@ -185,4 +193,26 @@ model InvoiceLineItem {
 
   @@index([invoiceId])
   @@map("invoice_line_items")
+}
+
+model Payment {
+  id             String        @id @default(cuid())
+  invoiceId      String
+  amountCents    Int
+  currency       String        @default("USD")
+  reference      String        @unique
+  paystackId     Int?
+  channel        String?
+  status         PaymentStatus @default(PENDING)
+  failureMessage String?
+  paidAt         DateTime?
+  metadata       Json?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@index([status])
+  @@map("payments")
 }

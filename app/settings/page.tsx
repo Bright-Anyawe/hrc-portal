@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/rbac";
 import { PasswordForm } from "@/components/settings/password-form";
+import { PageHeader } from "@/components/page-header";
 import {
   Card,
   CardContent,
@@ -19,12 +20,10 @@ export default async function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-        <p className="text-sm text-muted-foreground">
-          Manage your account and sign-in credentials.
-        </p>
-      </div>
+      <PageHeader
+        title="Settings"
+        description="Manage your account and sign-in credentials."
+      />
 
       <Card className="max-w-xl">
         <CardHeader>

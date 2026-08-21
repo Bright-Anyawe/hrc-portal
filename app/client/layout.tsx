@@ -1,6 +1,6 @@
 import { requireRole } from "@/lib/rbac";
 import { getNotifications } from "@/lib/notifications";
-import { PortalNav } from "@/components/portal-nav";
+import { PortalShell } from "@/components/portal-shell";
 
 export default async function ClientLayout({
   children,
@@ -11,21 +11,18 @@ export default async function ClientLayout({
   const notifications = await getNotifications(session.sub);
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      <PortalNav
-        name={session.name}
-        role="Client"
-        userRole="CLIENT"
-        notifications={notifications}
-        links={[{
-          href: "/client",
-          label: "Dashboard",
-        },
+    <PortalShell
+      name={session.name}
+      role="Client"
+      userRole="CLIENT"
+      notifications={notifications}
+      links={[
+        { href: "/client", label: "Dashboard" },
         { href: "/client/invoices", label: "Invoices" },
         { href: "/settings", label: "Settings" },
       ]}
-      />
-      <main className="mx-auto max-w-6xl px-4 py-8 md:px-6">{children}</main>
-    </div>
+    >
+      {children}
+    </PortalShell>
   );
 }

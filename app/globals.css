@@ -75,10 +75,29 @@
   --color-brand-navy-light: #16385f;
   --color-brand-gold: #da9100;
   --color-brand-charcoal: #2b2b2b;
+
+  --shadow-card: 0 1px 2px 0 rgb(10 37 64 / 0.05), 0 1px 3px 0 rgb(10 37 64 / 0.06);
+  --shadow-lifted: 0 14px 34px -8px rgb(10 37 64 / 0.22), 0 4px 14px -6px rgb(10 37 64 / 0.1);
+  --shadow-glow: 0 0 0 1px rgb(0 174 239 / 0.2), 0 10px 28px -8px rgb(0 174 239 / 0.4);
+  --shadow-row: inset 3px 0 0 0 var(--brand-sky);
 }
 
 dialog::backdrop {
-  background: rgb(0 0 0 / 0.5);
+  background: rgb(2 6 23 / 0.55);
+  backdrop-filter: blur(2px);
+}
+
+dialog[open]::backdrop {
+  animation: fade-in 0.2s ease-out both;
+}
+
+dialog.closing::backdrop {
+  animation: fade-out 0.18s ease-in both;
+}
+
+dialog::backdrop {
+  background: rgb(2 6 23 / 0.55);
+  backdrop-filter: blur(2px);
 }
 
 @layer base {
@@ -89,5 +108,348 @@ dialog::backdrop {
   body {
     background-color: var(--background);
     color: var(--foreground);
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Motion system                                                       */
+/* ------------------------------------------------------------------ */
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-in-left {
+  from {
+    transform: translateX(-16px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  60% {
+    transform: scale(1.08);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+@keyframes progress-stripes {
+  to {
+    background-position: 1rem 0;
+  }
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes dialog-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(6px) scale(0.96);
+  }
+}
+
+@keyframes fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes shake {
+  10%,
+  90% {
+    transform: translateX(-1px);
+  }
+  20%,
+  80% {
+    transform: translateX(2px);
+  }
+  30%,
+  50%,
+  70% {
+    transform: translateX(-3px);
+  }
+  40%,
+  60% {
+    transform: translateX(3px);
+  }
+}
+
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes draw-check {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes hero-float {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(-12px, -8px) scale(1.06);
+  }
+}
+
+@keyframes gradient-shift {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes ring-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@layer utilities {
+  .animate-fade-in {
+    animation: fade-in 0.4s ease-out both;
+  }
+  .animate-fade-in-up {
+    animation: fade-in-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .animate-scale-in {
+    animation: scale-in 0.18s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .animate-slide-in-right {
+    animation: slide-in-right 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .animate-slide-in-left {
+    animation: slide-in-left 0.25s ease-out both;
+  }
+  .animate-pop-in {
+    animation: pop-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .animate-pulse-ring {
+    animation: pulse-ring 1.6s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  }
+  .animate-progress-stripes {
+    background-image: linear-gradient(
+      45deg,
+      rgb(255 255 255 / 0.18) 25%,
+      transparent 25%,
+      transparent 50%,
+      rgb(255 255 255 / 0.18) 50%,
+      rgb(255 255 255 / 0.18) 75%,
+      transparent 75%,
+      transparent
+    );
+    background-size: 1rem 1rem;
+    animation: progress-stripes 1s linear infinite;
+  }
+  .animate-dialog-out {
+    animation: dialog-out 0.18s ease-in both;
+  }
+  .animate-fade-out {
+    animation: fade-out 0.25s ease-out both;
+  }
+  .animate-shake {
+    animation: shake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+  }
+  .animate-slide-down {
+    animation: slide-down 0.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .animate-toast-in {
+    animation: toast-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .animate-draw-check {
+    stroke-dasharray: 26;
+    stroke-dashoffset: 26;
+    animation: draw-check 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+  .animate-hero-float {
+    animation: hero-float 9s ease-in-out infinite;
+  }
+  .animate-gradient-shift {
+    background-size: 200% 200%;
+    animation: gradient-shift 12s ease-in-out infinite;
+  }
+}
+
+/* Hero grid pattern for dashboard banners */
+.bg-hero-grid {
+  background-image: linear-gradient(
+      to right,
+      rgb(255 255 255 / 0.05) 1px,
+      transparent 1px
+    ),
+    linear-gradient(to bottom, rgb(255 255 255 / 0.05) 1px, transparent 1px);
+  background-size: 26px 26px;
+}
+
+/* Polished scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklab, var(--muted-foreground) 38%, transparent)
+    transparent;
+}
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+  background-color: color-mix(
+    in oklab,
+    var(--muted-foreground) 40%,
+    transparent
+  );
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(
+    in oklab,
+    var(--muted-foreground) 60%,
+    transparent
+  );
+}
+
+::selection {
+  background: color-mix(in oklab, var(--brand-sky) 25%, transparent);
+  color: var(--foreground);
+}
+
+.anim-delay-75 {
+  animation-delay: 75ms;
+}
+.anim-delay-150 {
+  animation-delay: 150ms;
+}
+.anim-delay-225 {
+  animation-delay: 225ms;
+}
+.anim-delay-300 {
+  animation-delay: 300ms;
+}
+.anim-delay-375 {
+  animation-delay: 375ms;
+}
+.anim-delay-450 {
+  animation-delay: 450ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

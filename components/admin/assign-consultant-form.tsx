@@ -54,16 +54,16 @@ export function AssignConsultantForm({
         </div>
       </div>
       {state.ok && (
-        <p className="rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200">
+        <p className="animate-fade-in-up rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200">
           Consultant assigned to client.
         </p>
       )}
       {state.error && (
-        <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+        <p className="animate-fade-in-up rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {state.error}
         </p>
       )}
-      <Button type="submit" disabled={pending}>
+      <Button type="submit" loading={pending}>
         <Link2 className="h-4 w-4" />
         {pending ? "Assigning..." : "Assign consultant"}
       </Button>

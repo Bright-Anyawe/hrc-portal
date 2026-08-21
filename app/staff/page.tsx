@@ -1,9 +1,18 @@
 import Link from "next/link";
-import { ArrowRight, Building2, FolderKanban } from "lucide-react";
+import {
+  ArrowRight,
+  Building2,
+  CheckCircle2,
+  FolderKanban,
+  ListTodo,
+  Users,
+} from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/rbac";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { StatCard } from "@/components/stat-card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Avatar, AvatarFallback, getInitials } from "@/components/ui/avatar";
 import {
   Card,
@@ -12,6 +21,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { STATUS_LABEL, STATUS_VARIANT } from "@/lib/status";
+import { PortalHero } from "@/components/portal-hero";
 
 type ProjectWithProgress = {
   id: string;
@@ -22,6 +32,13 @@ type ProjectWithProgress = {
   completed: number;
   total: number;
 };
+
+function greeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
+}
 
 export default async function StaffPage() {
   const session = await requireRole(["CONSULTANT"]);
@@ -54,31 +71,77 @@ export default async function StaffPage() {
     new Map()
   );
 
+  const clientCount = grouped.size;
+  const activeCount = projects.filter((p) => p.status === "ACTIVE").length;
+  const completedTasks = projects.reduce(
+    (n, p) => n + p.tasks.filter((t) => t.isCompleted).length,
+    0
+  );
+  const openTasks = projects.reduce(
+    (n, p) => n + p.tasks.filter((t) => !t.isCompleted).length,
+    0
+  );
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">My clients</h1>
-        <p className="text-sm text-muted-foreground">
-          Projects you are actively delivering.
-        </p>
+      <PortalHero
+        tone="consultant"
+        eyebrow={greeting()}
+        title={session.name}
+        description="Projects you are actively delivering for your clients."
+      />
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard
+          label="Assigned clients"
+          value={clientCount}
+          icon={Users}
+          iconClassName="bg-brand-sky/15 text-brand-sky"
+          footer="Active engagements"
+          delay={0}
+        />
+        <StatCard
+          label="Active projects"
+          value={activeCount}
+          icon={FolderKanban}
+          iconClassName="bg-brand-navy/10 text-brand-navy"
+          footer={`${projects.length} total project${projects.length === 1 ? "" : "s"}`}
+          delay={50}
+        />
+        <StatCard
+          label="Tasks completed"
+          value={completedTasks}
+          icon={CheckCircle2}
+          iconClassName="bg-emerald-600/10 text-emerald-600"
+          footer="Deliverables done"
+          delay={100}
+        />
+        <StatCard
+          label="Open tasks"
+          value={openTasks}
+          icon={ListTodo}
+          iconClassName="bg-brand-gold/15 text-brand-gold"
+          footer="Awaiting completion"
+          delay={150}
+        />
       </div>
 
       {projects.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center gap-3 py-16 text-center">
-            <FolderKanban className="h-10 w-10 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">
-              No clients assigned yet. An administrator needs to assign you a
-              client.
-            </p>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={FolderKanban}
+          title="No clients assigned yet"
+          description="An administrator needs to assign you a client. Projects you deliver will appear here."
+        />
       ) : (
         <div className="space-y-6">
-          {[...grouped.entries()].map(([clientId, clientProjects]) => {
+          {[...grouped.entries()].map(([clientId, clientProjects], groupIdx) => {
             const client = clientProjects[0];
             return (
-              <Card key={clientId}>
+              <Card
+                key={clientId}
+                className="animate-fade-in-up transition-all duration-200 hover:shadow-md"
+                style={{ animationDelay: `${groupIdx * 60}ms` }}
+              >
                 <CardHeader className="flex flex-row items-center gap-3">
                   <Avatar className="h-10 w-10">
                     <AvatarFallback>
@@ -106,7 +169,7 @@ export default async function StaffPage() {
                       <Link
                         key={project.id}
                         href={`/staff/projects/${project.id}`}
-                        className="group block rounded-lg border p-4 transition-colors hover:bg-muted/40"
+                        className="group block rounded-lg border p-4 transition-all duration-200 hover:border-ring/40 hover:bg-muted/40 hover:shadow-sm active:scale-[0.99] motion-reduce:active:scale-100"
                       >
                         <div className="flex flex-wrap items-center justify-between gap-3">
                           <div className="min-w-0 flex-1">
@@ -121,7 +184,7 @@ export default async function StaffPage() {
                             <Badge variant={STATUS_VARIANT[project.status as keyof typeof STATUS_VARIANT]}>
                               {STATUS_LABEL[project.status as keyof typeof STATUS_LABEL]}
                             </Badge>
-                            <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+                            <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-hover:translate-x-0.5" />
                           </div>
                         </div>
                         <Progress value={progress} className="mt-3" />

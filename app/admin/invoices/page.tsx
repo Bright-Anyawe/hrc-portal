@@ -25,6 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { PageHeader } from "@/components/page-header";
 
 type Filter = "all" | "DRAFT" | "SENT" | "PAID" | "CANCELLED";
 
@@ -63,13 +64,10 @@ export default async function AdminInvoicesPage({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Invoices</h1>
-        <p className="text-sm text-muted-foreground">
-          Invoices are drafted automatically when a project is completed.
-          Review, price and send them from here.
-        </p>
-      </div>
+      <PageHeader
+        title="Invoices"
+        description="Invoices are drafted automatically when a project is completed. Review, price and send them from here."
+      />
 
       <div className="flex flex-wrap items-center gap-2">
         {FILTERS.map((f) => (

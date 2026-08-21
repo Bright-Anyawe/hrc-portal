@@ -1,11 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/rbac";
+import { Briefcase } from "lucide-react";
 import { deleteUser } from "@/app/actions/admin";
 import { AddUserModal } from "@/components/admin/add-user-modal";
 import { EditUserDialog } from "@/components/admin/edit-user-dialog";
 import { DeleteDialog } from "@/components/admin/delete-dialog";
 import { ChangeRoleDialog } from "@/components/admin/change-role-dialog";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Avatar, AvatarFallback, getInitials } from "@/components/ui/avatar";
 import {
   Card,
@@ -21,6 +23,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { PageHeader } from "@/components/page-header";
 
 export default async function AdminConsultantsPage() {
   await requireRole(["ADMIN"]);
@@ -38,22 +41,26 @@ export default async function AdminConsultantsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Consultants</h1>
-          <p className="text-sm text-muted-foreground">
-            Staff accounts who deliver client work.
-          </p>
-        </div>
-        <AddUserModal role="CONSULTANT" />
-      </div>
+      <PageHeader
+        title="Consultants"
+        description="Staff accounts who deliver client work."
+        actions={<AddUserModal role="CONSULTANT" />}
+      />
 
       <Card>
         <CardHeader>
           <CardTitle>All consultants</CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
-          <Table>
+          {consultants.length === 0 ? (
+            <EmptyState
+              icon={Briefcase}
+              title="No consultants yet"
+              description="Invite consultants to start delivering client work."
+              action={<AddUserModal role="CONSULTANT" />}
+            />
+          ) : (
+            <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
@@ -128,6 +135,7 @@ export default async function AdminConsultantsPage() {
               ))}
             </TableBody>
           </Table>
+          )}
         </CardContent>
       </Card>
     </div>

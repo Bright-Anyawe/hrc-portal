@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/rbac";
+import { Users } from "lucide-react";
 import { unassignConsultant, deleteUser } from "@/app/actions/admin";
 import { AddUserModal } from "@/components/admin/add-user-modal";
 import { EditUserDialog } from "@/components/admin/edit-user-dialog";
@@ -7,6 +8,7 @@ import { DeleteDialog } from "@/components/admin/delete-dialog";
 import { ChangeRoleDialog } from "@/components/admin/change-role-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Avatar, AvatarFallback, getInitials } from "@/components/ui/avatar";
 import {
   Card,
@@ -22,6 +24,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { PageHeader } from "@/components/page-header";
 
 export default async function AdminClientsPage() {
   await requireRole(["ADMIN"]);
@@ -39,22 +42,26 @@ export default async function AdminClientsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Clients</h1>
-          <p className="text-sm text-muted-foreground">
-            Client accounts managed by HRC.
-          </p>
-        </div>
-        <AddUserModal role="CLIENT" />
-      </div>
+      <PageHeader
+        title="Clients"
+        description="Client accounts managed by HRC."
+        actions={<AddUserModal role="CLIENT" />}
+      />
 
       <Card>
         <CardHeader>
           <CardTitle>All clients</CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
-          <Table>
+          {clients.length === 0 ? (
+            <EmptyState
+              icon={Users}
+              title="No clients yet"
+              description="Create your first client account to start assigning consultants and projects."
+              action={<AddUserModal role="CLIENT" />}
+            />
+          ) : (
+            <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
@@ -147,6 +154,7 @@ export default async function AdminClientsPage() {
               ))}
             </TableBody>
           </Table>
+          )}
         </CardContent>
       </Card>
     </div>

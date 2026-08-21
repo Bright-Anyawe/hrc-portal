@@ -81,12 +81,12 @@ function ProjectForm({
         </Select>
       </div>
       {state.ok && (
-        <p className="rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200">
+        <p className="animate-fade-in-up rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200">
           Project created.
         </p>
       )}
       {state.error && (
-        <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+        <p className="animate-fade-in-up rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {state.error}
         </p>
       )}
@@ -94,7 +94,7 @@ function ProjectForm({
         <Button type="button" variant="outline" onClick={onClose}>
           Cancel
         </Button>
-        <Button type="submit" disabled={pending}>
+        <Button type="submit" loading={pending}>
           {pending ? "Creating..." : "Create project"}
         </Button>
       </div>

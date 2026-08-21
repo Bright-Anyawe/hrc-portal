@@ -2,7 +2,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const badgeVariants = cva(
-  "inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors",
+  "inline-flex items-center gap-1.5 rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors",
   {
     variants: {
       variant: {
@@ -22,13 +22,35 @@ const badgeVariants = cva(
   }
 );
 
+const badgeDotVariants: Record<string, string> = {
+  default: "bg-primary-foreground",
+  secondary: "bg-secondary-foreground",
+  destructive: "bg-white",
+  outline: "bg-foreground",
+  success: "bg-emerald-600",
+  warning: "bg-amber-600",
+  info: "bg-sky-600",
+};
+
 export interface BadgeProps
   extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof badgeVariants> {}
+    VariantProps<typeof badgeVariants> {
+  dot?: boolean;
+}
 
-function Badge({ className, variant, ...props }: BadgeProps) {
+function Badge({ className, variant, dot, children, ...props }: BadgeProps) {
   return (
-    <div className={cn(badgeVariants({ variant }), className)} {...props} />
+    <div className={cn(badgeVariants({ variant }), className)} {...props}>
+      {dot && (
+        <span
+          className={cn(
+            "h-1.5 w-1.5 rounded-full",
+            badgeDotVariants[variant ?? "default"]
+          )}
+        />
+      )}
+      {children}
+    </div>
   );
 }
 

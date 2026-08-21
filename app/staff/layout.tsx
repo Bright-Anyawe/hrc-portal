@@ -1,6 +1,6 @@
 import { requireRole } from "@/lib/rbac";
 import { getNotifications } from "@/lib/notifications";
-import { PortalNav } from "@/components/portal-nav";
+import { PortalShell } from "@/components/portal-shell";
 
 export default async function StaffLayout({
   children,
@@ -11,20 +11,17 @@ export default async function StaffLayout({
   const notifications = await getNotifications(session.sub);
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      <PortalNav
-        name={session.name}
-        role="Consultant"
-        userRole="CONSULTANT"
-        notifications={notifications}
-        links={[{
-          href: "/staff",
-          label: "My Clients",
-        },
+    <PortalShell
+      name={session.name}
+      role="Consultant"
+      userRole="CONSULTANT"
+      notifications={notifications}
+      links={[
+        { href: "/staff", label: "My Clients" },
         { href: "/settings", label: "Settings" },
       ]}
-      />
-      <main className="mx-auto max-w-6xl px-4 py-8 md:px-6">{children}</main>
-    </div>
+    >
+      {children}
+    </PortalShell>
   );
 }

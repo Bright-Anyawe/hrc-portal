@@ -1,4 +1,5 @@
-import { FileText, Download } from "lucide-react";
+import Link from "next/link";
+import { FileText, Download, Eye } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/rbac";
 import {
@@ -7,6 +8,7 @@ import {
   invoiceTotalCents,
   formatCents,
 } from "@/lib/invoices";
+import { PayInvoiceButton } from "@/components/client/pay-invoice-button";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import {
@@ -23,6 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { PageHeader } from "@/components/page-header";
 
 export default async function ClientInvoicesPage() {
   const session = await requireRole(["CLIENT"]);
@@ -38,12 +41,10 @@ export default async function ClientInvoicesPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Invoices</h1>
-        <p className="text-sm text-muted-foreground">
-          Invoices for your projects with Hedge Resource Centre.
-        </p>
-      </div>
+      <PageHeader
+        title="Invoices"
+        description="Invoices for your projects with Hedge Resource Centre."
+      />
 
       <Card>
         <CardHeader>
@@ -67,49 +68,76 @@ export default async function ClientInvoicesPage() {
                   <TableHead className="text-right">Total</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Due date</TableHead>
-                  <TableHead className="text-right">Download</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {invoices.map((invoice) => (
-                  <TableRow key={invoice.id}>
-                    <TableCell className="font-medium">
-                      {invoice.number}
-                    </TableCell>
-                    <TableCell className="max-w-xs">
-                      <span className="line-clamp-1">
-                        {invoice.project.title}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {formatCents(invoiceTotalCents(invoice.lines))}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={INVOICE_STATUS_VARIANT[invoice.status]}>
-                        {INVOICE_STATUS_LABEL[invoice.status]}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {invoice.dueDate
-                        ? invoice.dueDate.toLocaleDateString()
-                        : "—"}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex justify-end">
-                        <a
-                          href={`/api/invoices/${invoice.id}/pdf`}
-                          className={buttonVariants({
-                            variant: "outline",
-                            size: "sm",
-                          })}
+                {invoices.map((invoice) => {
+                  const total = invoiceTotalCents(invoice.lines);
+                  const payable = invoice.status === "SENT" && total > 0;
+                  return (
+                    <TableRow key={invoice.id}>
+                      <TableCell className="font-medium">
+                        <Link
+                          href={`/client/invoices/${invoice.id}`}
+                          className="text-primary hover:underline"
                         >
-                          <Download className="h-3.5 w-3.5" />
-                          PDF
-                        </a>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                          {invoice.number}
+                        </Link>
+                      </TableCell>
+                      <TableCell className="max-w-xs">
+                        <span className="line-clamp-1">
+                          {invoice.project.title}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        {formatCents(total)}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={INVOICE_STATUS_VARIANT[invoice.status]}>
+                          {INVOICE_STATUS_LABEL[invoice.status]}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {invoice.dueDate
+                          ? invoice.dueDate.toLocaleDateString()
+                          : "—"}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-end gap-1">
+                          {payable && (
+                            <PayInvoiceButton
+                              invoiceId={invoice.id}
+                              size="sm"
+                            />
+                          )}
+                          <Link
+                            href={`/client/invoices/${invoice.id}`}
+                            className={buttonVariants({
+                              variant: "outline",
+                              size: "sm",
+                            })}
+                            aria-label={`View invoice ${invoice.number}`}
+                          >
+                            <Eye className="h-3.5 w-3.5" />
+                            View
+                          </Link>
+                          <a
+                            href={`/api/invoices/${invoice.id}/pdf`}
+                            className={buttonVariants({
+                              variant: "outline",
+                              size: "sm",
+                            })}
+                            aria-label={`Download invoice ${invoice.number} PDF`}
+                          >
+                            <Download className="h-3.5 w-3.5" />
+                            PDF
+                          </a>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           )}

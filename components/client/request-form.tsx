@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { SendHorizonal } from "lucide-react";
 import { submitRequest, type ActionResult } from "@/app/actions/client";
 import { Button } from "@/components/ui/button";
+import { FormAlert } from "@/components/ui/form-alert";
 
 export function RequestForm({ projectId }: { projectId: string }) {
   const [state, formAction, pending] = useActionState<ActionResult, FormData>(
@@ -19,19 +20,15 @@ export function RequestForm({ projectId }: { projectId: string }) {
         rows={3}
         required
         placeholder="Describe the request or deliverable you need..."
-        className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-[border-color,box-shadow] duration-150 placeholder:text-muted-foreground hover:border-ring/40 focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25"
       />
       {state.ok && (
-        <p className="rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200">
+        <FormAlert variant="success">
           Request submitted. Your consultant has been notified.
-        </p>
+        </FormAlert>
       )}
-      {state.error && (
-        <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {state.error}
-        </p>
-      )}
-      <Button type="submit" disabled={pending} size="sm">
+      {state.error && <FormAlert variant="error">{state.error}</FormAlert>}
+      <Button type="submit" loading={pending} size="sm">
         <SendHorizonal className="h-4 w-4" />
         {pending ? "Submitting..." : "Submit request"}
       </Button>

@@ -15,7 +15,7 @@ export default function AuthLayout({
       <div className="relative flex flex-1 flex-col items-center justify-center px-4 py-10">
         <Link
           href="/"
-          className="mb-6 flex items-center gap-3 rounded-lg px-2 py-1 transition-opacity hover:opacity-90"
+          className="animate-fade-in-up mb-6 flex items-center gap-3 rounded-lg px-2 py-1 transition-opacity hover:opacity-90"
         >
           <Image
             src="/images/HRC-logo - Copy.png"
@@ -31,11 +31,11 @@ export default function AuthLayout({
           </div>
         </Link>
 
-        {children}
+        <div className="animate-fade-in-up anim-delay-150">{children}</div>
 
         <Link
           href="/"
-          className="mt-6 inline-flex items-center gap-1.5 text-sm text-white/80 transition-colors hover:text-white"
+          className="animate-fade-in-up anim-delay-300 mt-6 inline-flex items-center gap-1.5 text-sm text-white/80 transition-colors hover:text-white"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to home

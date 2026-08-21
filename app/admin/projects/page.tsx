@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/rbac";
+import { FolderKanban } from "lucide-react";
 import { unassignConsultant, deleteProject } from "@/app/actions/admin";
 import { CreateProjectButton } from "@/components/admin/create-project-button";
 import { AssignConsultantForm } from "@/components/admin/assign-consultant-form";
@@ -7,6 +8,7 @@ import { EditProjectDialog } from "@/components/admin/edit-project-dialog";
 import { DeleteDialog } from "@/components/admin/delete-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   Card,
   CardContent,
@@ -23,6 +25,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { STATUS_LABEL, STATUS_VARIANT } from "@/lib/status";
+import { PageHeader } from "@/components/page-header";
 
 export default async function AdminProjectsPage() {
   await requireRole(["ADMIN"]);
@@ -56,18 +59,13 @@ export default async function AdminProjectsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Projects</h1>
-          <p className="text-sm text-muted-foreground">
-            Create projects and manage consultant-to-client assignments.
-          </p>
-        </div>
-        <CreateProjectButton
-          clients={clients}
-          consultants={consultants}
-        />
-      </div>
+      <PageHeader
+        title="Projects"
+        description="Create projects and manage consultant-to-client assignments."
+        actions={
+          <CreateProjectButton clients={clients} consultants={consultants} />
+        }
+      />
 
       <Card>
         <CardHeader>
@@ -120,9 +118,12 @@ export default async function AdminProjectsPage() {
         </CardHeader>
         <CardContent className="pt-0">
           {projects.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">
-              No projects yet. Create your first project.
-            </p>
+            <EmptyState
+              icon={FolderKanban}
+              title="No projects yet"
+              description="Create your first project for a client."
+              action={<CreateProjectButton clients={clients} consultants={consultants} />}
+            />
           ) : (
             <Table>
               <TableHeader>

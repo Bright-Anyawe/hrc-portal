@@ -170,7 +170,7 @@ export function InvoiceEditor({
       </div>
 
       {state.error && (
-        <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+        <p className="animate-fade-in-up rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {state.error}
         </p>
       )}
@@ -179,7 +179,7 @@ export function InvoiceEditor({
         <Button
           type="submit"
           variant="outline"
-          disabled={pending}
+          loading={pending}
           name="intent"
           value="save"
         >
@@ -210,7 +210,7 @@ export function InvoiceEditor({
           </Button>
           <Button
             type="submit"
-            disabled={pending}
+            loading={pending}
             name="intent"
             value="approve"
           >

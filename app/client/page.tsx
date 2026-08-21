@@ -1,16 +1,20 @@
 import {
   Briefcase,
   Building2,
+  CheckCircle2,
   Download,
   FileText,
   FolderKanban,
   Mail,
+  ListTodo,
 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/rbac";
 import { RequestForm } from "@/components/client/request-form";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { StatCard } from "@/components/stat-card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Avatar, AvatarFallback, getInitials } from "@/components/ui/avatar";
 import {
   Card,
@@ -20,6 +24,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { STATUS_LABEL, STATUS_VARIANT } from "@/lib/status";
+import { PortalHero } from "@/components/portal-hero";
+
+function greeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
+}
 
 export default async function ClientDashboardPage() {
   const session = await requireRole(["CLIENT"]);
@@ -46,16 +58,47 @@ export default async function ClientDashboardPage() {
   ]);
 
   const consultants = assignments.map((a) => a.consultant);
+  const activeProjects = projects.filter((p) => p.status === "ACTIVE").length;
+  const totalDocuments = projects.reduce((n, p) => n + p.documents.length, 0);
+  const openTasks = projects.reduce(
+    (n, p) => n + p.tasks.filter((t) => !t.isCompleted).length,
+    0
+  );
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">
-          Welcome, {session.name}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Your assigned consultant and project updates.
-        </p>
+      <PortalHero
+        tone="client"
+        eyebrow={greeting()}
+        title={session.name}
+        description="Your consultant and project updates at a glance."
+      />
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <StatCard
+          label="Active projects"
+          value={activeProjects}
+          icon={FolderKanban}
+          iconClassName="bg-brand-sky/15 text-brand-sky"
+          footer={`${projects.length} total project${projects.length === 1 ? "" : "s"}`}
+          delay={0}
+        />
+        <StatCard
+          label="Shared documents"
+          value={totalDocuments}
+          icon={FileText}
+          iconClassName="bg-brand-gold/15 text-brand-gold"
+          footer="Available to download"
+          delay={50}
+        />
+        <StatCard
+          label="Open tasks"
+          value={openTasks}
+          icon={ListTodo}
+          iconClassName="bg-brand-red/10 text-brand-red"
+          footer="Awaiting completion"
+          delay={100}
+        />
       </div>
 
       <section>
@@ -63,27 +106,30 @@ export default async function ClientDashboardPage() {
           Your consultant
         </h2>
         {consultants.length === 0 ? (
-          <Card>
-            <CardContent className="flex items-center gap-3 py-8">
-              <Briefcase className="h-8 w-8 text-muted-foreground" />
-              <div>
-                <p className="text-sm font-medium">No consultant assigned yet</p>
-                <p className="text-xs text-muted-foreground">
-                  HRC will assign a consultant to your account shortly.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <EmptyState
+            icon={Briefcase}
+            title="No consultant assigned yet"
+            description="HRC will assign a consultant to your account shortly. You'll be notified here."
+          />
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {consultants.map((consultant) => (
-              <Card key={consultant.id}>
+            {consultants.map((consultant, i) => (
+              <Card
+                key={consultant.id}
+                className="animate-fade-in-up transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md motion-reduce:hover:translate-y-0"
+                style={{ animationDelay: `${i * 60}ms` }}
+              >
                 <CardContent className="flex flex-col items-center gap-3 pt-6 text-center">
-                  <Avatar className="h-16 w-16">
-                    <AvatarFallback className="text-lg">
-                      {getInitials(consultant.name)}
-                    </AvatarFallback>
-                  </Avatar>
+                  <div className="relative">
+                    <Avatar className="h-16 w-16">
+                      <AvatarFallback className="text-lg">
+                        {getInitials(consultant.name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full border-2 border-white bg-emerald-500">
+                      <CheckCircle2 className="h-3 w-3 text-white" />
+                    </span>
+                  </div>
                   <div>
                     <p className="font-semibold">{consultant.name}</p>
                     <p className="text-xs uppercase tracking-wide text-muted-foreground">
@@ -92,7 +138,7 @@ export default async function ClientDashboardPage() {
                   </div>
                   <a
                     href={`mailto:${consultant.email}`}
-                    className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+                    className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-medium text-primary transition-all hover:bg-accent active:scale-95 motion-reduce:active:scale-100"
                   >
                     <Mail className="h-4 w-4" />
                     {consultant.email}
@@ -109,17 +155,14 @@ export default async function ClientDashboardPage() {
           Project progress
         </h2>
         {projects.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center gap-3 py-16 text-center">
-              <FolderKanban className="h-10 w-10 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">
-                No projects yet. Check back soon.
-              </p>
-            </CardContent>
-          </Card>
+          <EmptyState
+            icon={FolderKanban}
+            title="No projects yet"
+            description="Once HRC creates a project for you, its progress and documents will appear here."
+          />
         ) : (
           <div className="grid gap-4 lg:grid-cols-2">
-            {projects.map((project) => {
+            {projects.map((project, i) => {
               const completed = project.tasks.filter((t) => t.isCompleted).length;
               const progress =
                 project.tasks.length === 0
@@ -127,7 +170,11 @@ export default async function ClientDashboardPage() {
                   : Math.round((completed / project.tasks.length) * 100);
 
               return (
-                <Card key={project.id} className="flex flex-col">
+                <Card
+                  key={project.id}
+                  className="flex animate-fade-in-up flex-col transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md motion-reduce:hover:translate-y-0"
+                  style={{ animationDelay: `${i * 60}ms` }}
+                >
                   <CardHeader>
                     <div className="flex flex-wrap items-start justify-between gap-2">
                       <CardTitle className="text-lg">{project.title}</CardTitle>
@@ -166,7 +213,7 @@ export default async function ClientDashboardPage() {
                               <a
                                 href={doc.fileUrl}
                                 download
-                                className="flex items-center gap-2 rounded-md border px-2.5 py-1.5 text-sm transition-colors hover:bg-muted/50"
+                                className="flex items-center gap-2 rounded-md border px-2.5 py-1.5 text-sm transition-all hover:border-ring/40 hover:bg-muted/50 active:scale-[0.99] motion-reduce:active:scale-100"
                               >
                                 <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
                                 <span className="flex-1 truncate">

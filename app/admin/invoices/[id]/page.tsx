@@ -1,18 +1,21 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Download, CheckCircle2, XCircle } from "lucide-react";
+import { ArrowLeft, Download, CheckCircle2, XCircle, FileText, Receipt } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/rbac";
 import { markInvoicePaid, cancelInvoice } from "@/app/actions/invoices";
 import {
   INVOICE_STATUS_LABEL,
   INVOICE_STATUS_VARIANT,
+  PAYMENT_STATUS_LABEL,
+  PAYMENT_STATUS_VARIANT,
   invoiceTotalCents,
   lineTotalCents,
   formatCents,
 } from "@/lib/invoices";
 import { InvoiceEditor } from "@/components/admin/invoice-editor";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Card,
@@ -43,6 +46,7 @@ export default async function AdminInvoiceDetailPage({
       project: { select: { title: true, status: true } },
       client: { select: { name: true, email: true } },
       lines: true,
+      payments: { orderBy: { createdAt: "desc" } },
     },
   });
   if (!invoice) notFound();
@@ -132,9 +136,11 @@ export default async function AdminInvoiceDetailPage({
             </CardHeader>
             <CardContent className="pt-0">
               {invoice.lines.length === 0 ? (
-                <p className="py-8 text-center text-sm text-muted-foreground">
-                  No line items on this invoice.
-                </p>
+                <EmptyState
+                  icon={FileText}
+                  title="No line items on this invoice"
+                  description="This invoice has no priced line items yet."
+                />
               ) : (
                 <Table>
                   <TableHeader>
@@ -196,6 +202,62 @@ export default async function AdminInvoiceDetailPage({
               </CardContent>
             </Card>
           )}
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Receipt className="h-4 w-4 text-muted-foreground" />
+                Payments
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              {invoice.payments.length === 0 ? (
+                <EmptyState
+                  icon={Receipt}
+                  title="No payments recorded"
+                  description="Online payments made by the client will appear here."
+                />
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Reference</TableHead>
+                      <TableHead>Channel</TableHead>
+                      <TableHead className="text-right">Amount</TableHead>
+                      <TableHead>Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {invoice.payments.map((payment) => (
+                      <TableRow key={payment.id}>
+                        <TableCell>
+                          {payment.paidAt?.toLocaleString() ??
+                            payment.createdAt.toLocaleString()}
+                        </TableCell>
+                        <TableCell className="font-mono text-xs">
+                          {payment.reference}
+                        </TableCell>
+                        <TableCell className="capitalize">
+                          {payment.channel ?? "—"}
+                        </TableCell>
+                        <TableCell className="text-right font-medium">
+                          {formatCents(payment.amountCents)}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={PAYMENT_STATUS_VARIANT[payment.status]}
+                          >
+                            {PAYMENT_STATUS_LABEL[payment.status]}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
         </>
       )}
     </div>

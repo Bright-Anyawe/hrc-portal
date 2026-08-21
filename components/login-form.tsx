@@ -49,12 +49,12 @@ export function LoginForm() {
       </CardHeader>
       <CardContent>
         {next && (
-          <p className="mb-4 rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
+          <p className="animate-fade-in-up mb-4 rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
             You need to sign in to view that page.
           </p>
         )}
         {error && (
-          <div className="mb-4 flex items-center gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          <div className="animate-fade-in-up mb-4 flex items-center gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
             <AlertCircle className="h-4 w-4 shrink-0" />
             {error === "access_denied"
               ? "Google sign-in was cancelled."
@@ -107,12 +107,12 @@ export function LoginForm() {
           </div>
           </div>
           {state.error && (
-            <div className="flex items-center gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            <div className="animate-fade-in-up flex items-center gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
               <AlertCircle className="h-4 w-4 shrink-0" />
               {state.error}
             </div>
           )}
-          <Button type="submit" className="w-full" disabled={pending}>
+          <Button type="submit" className="w-full" loading={pending}>
             {pending ? "Signing in..." : "Sign in"}
           </Button>
         </form>
