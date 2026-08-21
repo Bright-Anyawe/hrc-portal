@@ -116,7 +116,7 @@ export function PortalShell({
 
   const NavList = ({ onNavigate }: { onNavigate?: () => void }) => (
     <nav className="flex flex-1 flex-col gap-1 px-3 py-3">
-      {links.map((link) => {
+      {links.map((link, i) => {
         const Icon = getNavIcon(link.href);
         const active = isActive(link.href);
         return (
@@ -126,28 +126,29 @@ export function PortalShell({
             onClick={onNavigate}
             title={collapsed ? link.label : undefined}
             aria-current={active ? "page" : undefined}
+            style={{ animationDelay: `${i * 28}ms` }}
             className={cn(
-              "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150",
+              "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] animate-fade-in-up",
               active
-                ? "bg-brand-sky/10 text-brand-navy"
-                : "text-muted-foreground hover:translate-x-0.5 hover:bg-muted hover:text-brand-navy",
+                ? "bg-brand-sky/10 text-brand-navy shadow-sm"
+                : "text-muted-foreground hover:translate-x-1 hover:bg-muted hover:text-brand-navy hover:shadow-sm",
               collapsed && "justify-center px-2"
             )}
           >
             {active && (
-              <span className="animate-scale-in absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-brand-red" />
+              <span className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-brand-red animate-[nav-indicator_0.32s_cubic-bezier(0.22,1,0.36,1)_both]" />
             )}
             <Icon
               className={cn(
-                "h-[18px] w-[18px] shrink-0 transition-transform duration-150 group-hover:scale-110",
+                "h-[18px] w-[18px] shrink-0 transition-all duration-200 ease-out group-hover:scale-110 group-active:scale-95",
                 active
                   ? "text-brand-sky"
                   : "text-muted-foreground group-hover:text-brand-navy"
               )}
             />
-            {!collapsed && <span>{link.label}</span>}
+            {!collapsed && <span className="transition-transform duration-200 group-hover:translate-x-px">{link.label}</span>}
             {!collapsed && active && (
-              <span className="ml-auto h-1.5 w-1.5 rounded-full bg-brand-red" />
+              <span className="ml-auto h-1.5 w-1.5 rounded-full bg-brand-red animate-pulse-soft" />
             )}
           </Link>
         );
@@ -196,7 +197,7 @@ export function PortalShell({
         {/* Desktop sidebar */}
         <aside
           className={cn(
-            "sticky top-0 hidden h-screen shrink-0 flex-col border-r bg-white transition-[width] duration-300 ease-in-out motion-reduce:transition-none md:flex",
+            "sticky top-0 hidden h-screen shrink-0 flex-col border-r bg-white shadow-sm transition-[width,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none md:flex",
             collapsed ? "w-[68px]" : "w-64"
           )}
         >
@@ -234,7 +235,7 @@ export function PortalShell({
           <button
             type="button"
             onClick={() => setCollapsed((c) => !c)}
-            className="flex h-9 items-center justify-center gap-2 border-t text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-brand-navy"
+            className="flex h-9 items-center justify-center gap-2 border-t text-xs font-medium text-muted-foreground transition-all duration-200 ease-out hover:bg-muted hover:text-brand-navy active:bg-muted/70"
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             {collapsed ? (
@@ -296,7 +297,7 @@ export function PortalShell({
 
         {/* Main column */}
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-30 border-b bg-white/90 backdrop-blur">
+          <header className="sticky top-0 z-30 border-b bg-white/80 backdrop-blur-xl supports-[backdrop-filter]:bg-white/70 transition-[background-color,backdrop-filter,box-shadow] duration-300 ease-out">
             <div className="flex h-16 items-center gap-2 px-4 md:px-6">
               <Button
                 variant="ghost"
@@ -393,7 +394,7 @@ export function PortalShell({
           </header>
 
           <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 md:px-6 md:py-8">
-            <div key={pathname} className="animate-fade-in-up">
+            <div key={pathname} className="animate-fade-in-blur">
               {children}
             </div>
           </main>

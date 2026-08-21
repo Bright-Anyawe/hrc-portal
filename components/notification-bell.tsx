@@ -94,15 +94,15 @@ export function NotificationBell({
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="relative rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground active:scale-95 motion-reduce:active:scale-100"
+        className="group relative rounded-md p-2 text-muted-foreground transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-muted hover:text-foreground hover:scale-105 active:scale-95 motion-reduce:hover:scale-100 motion-reduce:active:scale-100"
         aria-label="Notifications"
         aria-expanded={open}
       >
-        <Bell className="h-5 w-5" />
+        <Bell className="h-5 w-5 transition-transform duration-200 group-hover:rotate-6 group-active:rotate-0" />
         {unreadCount > 0 && (
           <span
             key={unreadCount}
-            className="animate-pop-in absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-white"
+            className="animate-pop-in absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-white shadow-sm ring-2 ring-white"
           >
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>

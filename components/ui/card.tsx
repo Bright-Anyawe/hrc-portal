@@ -4,7 +4,7 @@ function Card({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       className={cn(
-        "rounded-xl border bg-card text-card-foreground shadow-card transition-shadow duration-200 motion-reduce:transition-none",
+        "rounded-xl border bg-card text-card-foreground shadow-card transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:shadow-lifted hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:hover:shadow-card",
         className
       )}
       {...props}

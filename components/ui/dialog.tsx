@@ -51,12 +51,12 @@ export function Dialog({
         }
       }}
       className={cn(
-        "m-auto max-h-[calc(100dvh-1.5rem)] w-[calc(100%-1.5rem)] max-w-md overflow-y-auto rounded-xl border bg-background p-0 text-foreground shadow-lifted outline-none backdrop:bg-slate-950/55 backdrop:backdrop-blur-sm",
-        closing ? "animate-dialog-out closing" : "animate-scale-in",
+        "m-auto max-h-[calc(100dvh-1.5rem)] w-[calc(100%-1.5rem)] max-w-md overflow-y-auto rounded-xl border bg-background p-0 text-foreground shadow-lifted outline-none backdrop:bg-slate-950/55 backdrop:backdrop-blur-sm transition-shadow duration-300",
+        closing ? "animate-dialog-out closing" : "animate-scale-in-soft",
         className
       )}
     >
-      <div className="animate-scale-in">
+      <div className="animate-scale-in-soft">
         <div className="flex items-start justify-between gap-4 border-b p-4">
           <div>
             <h2 className="text-base font-semibold tracking-tight">{title}</h2>

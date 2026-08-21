@@ -3,18 +3,18 @@ import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "group/btn relative inline-flex items-center justify-center gap-2 whitespace-nowrap overflow-hidden rounded-md text-sm font-medium transition-all duration-200 ease-out disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background cursor-pointer active:scale-[0.97] motion-reduce:transition-none motion-reduce:active:scale-100",
+  "group/btn relative inline-flex items-center justify-center gap-2 whitespace-nowrap overflow-hidden rounded-md text-sm font-medium transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background cursor-pointer active:scale-[0.97] motion-reduce:transition-none motion-reduce:active:scale-100 before:pointer-events-none before:absolute before:inset-0 before:-translate-x-full before:bg-gradient-to-r before:from-transparent before:via-white/15 before:to-transparent before:opacity-0 before:transition-none hover:before:translate-x-full hover:before:opacity-100 hover:before:transition-[transform,opacity] hover:before:duration-700 hover:before:ease-out",
   {
     variants: {
       variant: {
         default:
-          "bg-gradient-to-b from-brand-red to-brand-red/90 text-white shadow-sm shadow-brand-red/20 hover:shadow-md hover:shadow-brand-red/30 hover:brightness-[1.06] active:brightness-95",
+          "bg-gradient-to-b from-brand-red to-brand-red/90 text-white shadow-sm shadow-brand-red/20 hover:shadow-md hover:shadow-brand-red/30 hover:brightness-[1.06] hover:-translate-y-px active:translate-y-0 active:brightness-95",
         destructive:
-          "bg-destructive text-white shadow-sm hover:bg-destructive/90 hover:shadow-md active:bg-destructive/95",
+          "bg-destructive text-white shadow-sm hover:bg-destructive/90 hover:shadow-md hover:-translate-y-px active:translate-y-0 active:bg-destructive/95",
         outline:
-          "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground hover:border-ring/40 hover:shadow-md active:bg-accent/70",
+          "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground hover:border-ring/40 hover:shadow-md hover:-translate-y-px active:translate-y-0 active:bg-accent/70",
         secondary:
-          "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80 hover:shadow-md active:bg-secondary/70",
+          "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80 hover:shadow-md hover:-translate-y-px active:translate-y-0 active:bg-secondary/70",
         ghost: "hover:bg-accent hover:text-accent-foreground active:bg-accent/70",
         link: "text-primary underline-offset-4 hover:underline",
       },

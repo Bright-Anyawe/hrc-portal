@@ -7,7 +7,7 @@ function Avatar({
   return (
     <div
       className={cn(
-        "relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full ring-1 ring-border/60",
+        "relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full ring-1 ring-border/60 transition-all duration-200 ease-out hover:ring-2 hover:ring-border hover:shadow-sm hover:scale-[1.03] motion-reduce:hover:scale-100",
         className
       )}
       {...props}
