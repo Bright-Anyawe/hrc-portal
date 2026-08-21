@@ -372,11 +372,7 @@ export function PortalShell({
                         <Settings className="h-4 w-4" />
                         Settings
                       </Link>
-                      <form
-                        action={logout}
-                        className="border-t"
-                        onClick={() => setMenuOpen(false)}
-                      >
+                      <form action={logout} className="border-t">
                         <button
                           type="submit"
                           role="menuitem"
