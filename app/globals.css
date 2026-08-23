@@ -713,6 +713,132 @@ button:focus-visible {
   animation-delay: 450ms;
 }
 
+/* ------------------------------------------------------------------ */
+/* Cinematic landing system                                            */
+/* ------------------------------------------------------------------ */
+
+@keyframes aurora-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(4%, -7%, 0) scale(1.14);
+  }
+}
+
+@keyframes aurora-drift-2 {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1.04) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(-5%, 5%, 0) scale(1.2) rotate(5deg);
+  }
+}
+
+@keyframes camera-zoom {
+  0% {
+    transform: scale(1.02) translate3d(0, 0, 0);
+  }
+  100% {
+    transform: scale(1.16) translate3d(-1.6%, -1.6%, 0);
+  }
+}
+
+@keyframes gradient-hop {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes seam-sweep {
+  0% {
+    transform: translateX(-120%) skewX(-14deg);
+  }
+  100% {
+    transform: translateX(220%) skewX(-14deg);
+  }
+}
+
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-aurora {
+  animation: aurora-drift 28s ease-in-out infinite;
+}
+.animate-aurora-2 {
+  animation: aurora-drift-2 36s ease-in-out infinite;
+}
+.animate-camera-zoom {
+  animation: camera-zoom 48s cubic-bezier(0.22, 1, 0.36, 1) infinite alternate;
+}
+.animate-gradient-hop {
+  background-size: 200% 200%;
+  animation: gradient-hop 14s ease-in-out infinite;
+}
+.animate-bob {
+  animation: bob 7s ease-in-out infinite;
+}
+
+/* Gradient text for emphasis (colour-safe in both themes) */
+.text-gradient {
+  background: linear-gradient(92deg, #00aeef 0%, #7ce0ff 45%, #da9100 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.text-gradient-gold {
+  background: linear-gradient(92deg, #da9100 0%, #ffce6b 55%, #00aeef 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Card shine sweep on hover (opt-in) */
+.sheen {
+  position: relative;
+  overflow: hidden;
+}
+.sheen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-120%) skewX(-14deg);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgb(255 255 255 / 0.28),
+    transparent
+  );
+  opacity: 0;
+  pointer-events: none;
+}
+.sheen:hover::after {
+  animation: seam-sweep 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+  opacity: 1;
+}
+
+/* Soft grain to kill banding on large gradients */
+.bg-grain {
+  background-image: radial-gradient(
+    rgb(255 255 255 / 0.02) 1px,
+    transparent 1px
+  );
+  background-size: 3px 3px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
