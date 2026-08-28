@@ -24,15 +24,23 @@ function getClientSecret(): string {
   return secret;
 }
 
-function getRedirectUri(): string {
-  const base = process.env.PORTAL_URL ?? "http://localhost:3000";
-  return `${base}/api/auth/google/callback`;
+/**
+ * Builds the OAuth redirect URI from the actual request origin so it always
+ * matches the host being used (localhost, preview deploys, and production)
+ * regardless of PORTAL_URL. The exact URL must also be authorized in the
+ * Google OAuth console.
+ */
+export function getCallbackUrl(origin: string): string {
+  return `${origin}/api/auth/google/callback`;
 }
 
-export function getGoogleAuthorizationUrl(state: string): string {
+export function getGoogleAuthorizationUrl(
+  state: string,
+  callbackUrl: string
+): string {
   const params = new URLSearchParams({
     client_id: getClientId(),
-    redirect_uri: getRedirectUri(),
+    redirect_uri: callbackUrl,
     response_type: "code",
     scope: "openid email profile",
     access_type: "online",
@@ -42,7 +50,7 @@ export function getGoogleAuthorizationUrl(state: string): string {
   return `${GOOGLE_AUTH_URL}?${params.toString()}`;
 }
 
-export async function exchangeCodeForTokens(code: string) {
+export async function exchangeCodeForTokens(code: string, callbackUrl: string) {
   const res = await fetch(GOOGLE_TOKEN_URL, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -50,7 +58,7 @@ export async function exchangeCodeForTokens(code: string) {
       code,
       client_id: getClientId(),
       client_secret: getClientSecret(),
-      redirect_uri: getRedirectUri(),
+      redirect_uri: callbackUrl,
       grant_type: "authorization_code",
     }),
   });

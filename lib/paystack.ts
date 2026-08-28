@@ -23,7 +23,9 @@ function getSecretKey(): string {
   const key = process.env.PAYSTACK_SECRET_KEY;
   if (!key) {
     throw new PaystackError(
-      "Paystack is not configured. Set PAYSTACK_SECRET_KEY in your environment."
+      "Paystack is not configured for this deployment.",
+      undefined,
+      "Paystack is not configured (missing PAYSTACK_SECRET_KEY)."
     );
   }
   return key;

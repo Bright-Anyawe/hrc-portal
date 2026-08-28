@@ -134,8 +134,8 @@ export async function beginPaymentForInvoice(input: {
     return {
       ok: false,
       error:
-        e instanceof PaystackError && e.paystackMessage
-          ? `Paystack: ${e.paystackMessage}`
+        e instanceof PaystackError
+          ? e.paystackMessage ?? e.message
           : "Could not start payment. Please try again later.",
     };
   }

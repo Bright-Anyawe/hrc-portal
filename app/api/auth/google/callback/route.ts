@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { createSession } from "@/lib/auth";
 import { ROLE_HOMES } from "@/lib/rbac";
+import { getCallbackUrl } from "@/lib/google-auth";
 import {
   exchangeCodeForTokens,
   fetchGoogleUserInfo,
@@ -24,6 +25,7 @@ export async function GET(req: NextRequest) {
   const code = req.nextUrl.searchParams.get("code");
   const returnedState = req.nextUrl.searchParams.get("state");
   const expectedState = store.get(STATE_COOKIE)?.value;
+  const nextPath = store.get(NEXT_COOKIE)?.value ?? null;
 
   store.delete(STATE_COOKIE);
   store.delete(NEXT_COOKIE);
@@ -34,7 +36,10 @@ export async function GET(req: NextRequest) {
 
   let googleUser;
   try {
-    const { access_token } = await exchangeCodeForTokens(code);
+    const { access_token } = await exchangeCodeForTokens(
+      code,
+      getCallbackUrl(req.nextUrl.origin)
+    );
     googleUser = await fetchGoogleUserInfo(access_token);
   } catch {
     return NextResponse.redirect(new URL("/login?error=google_failed", req.url));
@@ -70,7 +75,6 @@ export async function GET(req: NextRequest) {
     role: user.role,
   });
 
-  const nextPath = store.get(NEXT_COOKIE)?.value ?? null;
   const target = nextPath && nextPath.startsWith("/") ? nextPath : ROLE_HOMES[user.role];
   return NextResponse.redirect(new URL(target, req.url));
 }
