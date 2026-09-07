@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { CinematicBackdrop } from "@/components/landing/cinematic-backdrop";
+import KineticGrid from "@/components/ui/kinetic-grid";
 import { Reveal } from "@/components/landing/reveal";
 import { cn } from "@/lib/utils";
 
@@ -312,6 +313,7 @@ export function LandingPage() {
 
       <section id="top" className="relative grid min-h-[92vh] overflow-hidden text-white">
         <CinematicBackdrop />
+        <KineticGrid className="absolute inset-0 opacity-55" />
         <div className="relative z-10 mx-auto grid w-full max-w-6xl gap-12 px-4 pb-24 pt-32 md:px-6 lg:grid-cols-[1.15fr_1fr] lg:items-center">
           <div className="space-y-6">
             <Reveal variant="fade-down" duration={600}>
