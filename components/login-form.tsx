@@ -131,6 +131,33 @@ export function LoginForm() {
           <GoogleIcon className="mr-2 h-4 w-4" />
           Continue with Google
         </a>
+        <p className="mt-4 text-center text-xs text-muted-foreground">
+          Don&apos;t have an account?{" "}
+          <a
+            href="/signup"
+            className="font-medium text-primary underline-offset-4 hover:underline"
+          >
+            Create an account
+          </a>
+        </p>
+
+        <p className="mt-4 border-t pt-3 text-center text-[11px] leading-relaxed text-muted-foreground">
+          By continuing, you agree to our{" "}
+          <a
+            href="/terms"
+            className="underline underline-offset-4 hover:text-foreground"
+          >
+            Terms of Service
+          </a>{" "}
+          and{" "}
+          <a
+            href="/privacy"
+            className="underline underline-offset-4 hover:text-foreground"
+          >
+            Privacy Policy
+          </a>
+          .
+        </p>
       </CardContent>
     </Card>
   );

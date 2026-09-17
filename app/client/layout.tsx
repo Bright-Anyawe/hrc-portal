@@ -18,6 +18,7 @@ export default async function ClientLayout({
       notifications={notifications}
       links={[
         { href: "/client", label: "Dashboard" },
+        { href: "/client/profile", label: "My Profile" },
         { href: "/client/invoices", label: "Invoices" },
         { href: "/settings", label: "Settings" },
       ]}

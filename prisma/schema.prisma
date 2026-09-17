@@ -36,6 +36,13 @@ enum PaymentStatus {
   CANCELLED
 }
 
+enum ProfileStatus {
+  DRAFT
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+}
+
 model User {
   id           String   @id @default(cuid())
   name         String
@@ -53,6 +60,8 @@ model User {
   projectsAsClient      Project[]          @relation("ProjectsClient")
   documentsUploaded     Document[]         @relation("DocumentsUploaded")
   invoicesForClient     Invoice[]          @relation("InvoicesForClient")
+  clientProfile         ClientProfile?     @relation("ClientProfile")
+  reviewedProfiles      ClientProfile[]    @relation("ReviewedProfiles")
   notifications         Notification[]
   auditLogs             AuditLog[]
 
@@ -215,4 +224,26 @@ model Payment {
   @@index([invoiceId])
   @@index([status])
   @@map("payments")
+}
+
+model ClientProfile {
+  id             String        @id @default(cuid())
+  userId         String        @unique
+  status         ProfileStatus @default(DRAFT)
+  profileData    Json          @default("{}")
+  hrcData        Json          @default("{}")
+  completionPct  Int           @default(0)
+  completedAt    DateTime?
+  reviewedById   String?
+  reviewedAt     DateTime?
+  rejectionReason String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  user       User  @relation("ClientProfile", fields: [userId], references: [id], onDelete: Cascade)
+  reviewedBy User? @relation("ReviewedProfiles", fields: [reviewedById], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@map("client_profiles")
 }

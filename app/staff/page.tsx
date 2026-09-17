@@ -3,12 +3,14 @@ import {
   ArrowRight,
   Building2,
   CheckCircle2,
+  FileText,
   FolderKanban,
   ListTodo,
   Users,
 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/rbac";
+import { ProfileStatusBadge } from "@/components/client/profile-status";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { StatCard } from "@/components/stat-card";
@@ -47,7 +49,14 @@ export default async function StaffPage() {
     where: { consultantId: session.sub },
     orderBy: { updatedAt: "desc" },
     include: {
-      client: { select: { id: true, name: true, email: true } },
+      client: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          clientProfile: { select: { status: true, completionPct: true } },
+        },
+      },
       tasks: { select: { id: true, isCompleted: true } },
     },
   });
@@ -148,7 +157,7 @@ export default async function StaffPage() {
                       {getInitials(client.clientName)}
                     </AvatarFallback>
                   </Avatar>
-                  <div>
+                  <div className="flex-1">
                     <CardTitle className="flex items-center gap-2 text-base">
                       <Building2 className="h-4 w-4 text-muted-foreground" />
                       {client.clientName}
@@ -158,6 +167,13 @@ export default async function StaffPage() {
                       {clientProjects.length !== 1 ? "s" : ""}
                     </p>
                   </div>
+                  <Link
+                    href={`/staff/clients/${clientId}/profile`}
+                    className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    <FileText className="h-3 w-3" />
+                    Profile
+                  </Link>
                 </CardHeader>
                 <CardContent className="space-y-3 pt-0">
                   {clientProjects.map((project) => {

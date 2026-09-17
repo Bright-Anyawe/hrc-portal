@@ -78,6 +78,19 @@ Please change your password after signing in (not yet implemented).
     console.error("Failed to send invitation email:", e);
   }
 
+  // Auto-create client profile for CLIENT role
+  if (role === "CLIENT") {
+    await prisma.clientProfile.create({
+      data: {
+        userId: user.id,
+        status: "DRAFT",
+        profileData: { organization: { orgName: name } },
+        hrcData: {},
+        completionPct: 0,
+      },
+    });
+  }
+
   revalidatePath("/admin");
   return { ok: true, email: user.email, password, name: user.name };
 }
@@ -212,6 +225,7 @@ export async function deleteUser(userId: string): Promise<ActionResult> {
         OR: [{ createdById: userId }, { clientId: userId }, { consultantId: userId }],
       },
     }),
+    prisma.clientProfile.deleteMany({ where: { userId } }),
   ]);
 
   await prisma.user.delete({ where: { id: userId } });

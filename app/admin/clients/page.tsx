@@ -1,11 +1,13 @@
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/rbac";
-import { Users } from "lucide-react";
+import { Users, FileText } from "lucide-react";
 import { unassignConsultant, deleteUser } from "@/app/actions/admin";
 import { AddUserModal } from "@/components/admin/add-user-modal";
 import { EditUserDialog } from "@/components/admin/edit-user-dialog";
 import { DeleteDialog } from "@/components/admin/delete-dialog";
 import { ChangeRoleDialog } from "@/components/admin/change-role-dialog";
+import { ProfileStatusBadge } from "@/components/client/profile-status";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -37,6 +39,7 @@ export default async function AdminClientsPage() {
         include: { consultant: { select: { id: true, name: true } } },
       },
       projectsAsClient: { select: { id: true } },
+      clientProfile: { select: { status: true, completionPct: true } },
     },
   });
 
@@ -66,6 +69,7 @@ export default async function AdminClientsPage() {
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
+                <TableHead>Profile</TableHead>
                 <TableHead>Assigned consultants</TableHead>
                 <TableHead>Projects</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -86,6 +90,29 @@ export default async function AdminClientsPage() {
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {client.email}
+                  </TableCell>
+                  <TableCell>
+                    {client.clientProfile ? (
+                      <Link
+                        href={`/admin/clients/${client.id}/profile`}
+                        className="inline-flex items-center gap-1.5 text-sm hover:underline"
+                      >
+                        <FileText className="h-3.5 w-3.5" />
+                        <ProfileStatusBadge
+                          status={client.clientProfile.status as never}
+                        />
+                        <span className="text-muted-foreground">
+                          {client.clientProfile.completionPct}%
+                        </span>
+                      </Link>
+                    ) : (
+                      <Link
+                        href={`/admin/clients/${client.id}/profile`}
+                        className="text-sm text-muted-foreground hover:underline"
+                      >
+                        Create profile
+                      </Link>
+                    )}
                   </TableCell>
                   <TableCell>
                     {client.clientAssignments.length === 0 ? (

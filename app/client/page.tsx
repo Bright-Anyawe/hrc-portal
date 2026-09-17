@@ -7,10 +7,13 @@ import {
   FolderKanban,
   Mail,
   ListTodo,
+  User,
 } from "lucide-react";
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/rbac";
 import { RequestForm } from "@/components/client/request-form";
+import { ProfileStatusBadge } from "@/components/client/profile-status";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { StatCard } from "@/components/stat-card";
@@ -36,7 +39,7 @@ function greeting() {
 export default async function ClientDashboardPage() {
   const session = await requireRole(["CLIENT"]);
 
-  const [assignments, projects] = await Promise.all([
+  const [assignments, projects, profile] = await Promise.all([
     prisma.clientAssignment.findMany({
       where: { clientId: session.sub },
       include: {
@@ -54,6 +57,9 @@ export default async function ClientDashboardPage() {
           select: { id: true, name: true, fileUrl: true },
         },
       },
+    }),
+    prisma.clientProfile.findUnique({
+      where: { userId: session.sub },
     }),
   ]);
 
@@ -100,6 +106,34 @@ export default async function ClientDashboardPage() {
           delay={100}
         />
       </div>
+
+      {/* Profile completion card */}
+      {profile && profile.status !== "APPROVED" && (
+        <Link href="/client/profile" className="block">
+          <Card className="transition-all hover:shadow-md hover:border-primary/30">
+            <CardContent className="flex items-center gap-4 py-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                <User className="h-5 w-5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <p className="font-medium">Complete your client profile</p>
+                  <ProfileStatusBadge status={profile.status as never} />
+                </div>
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  {profile.completionPct}% complete —{" "}
+                  {profile.status === "DRAFT"
+                    ? "Start filling in your organisation details"
+                    : profile.status === "REJECTED"
+                      ? "Please update your profile as requested"
+                      : "Your profile is under review"}
+                </p>
+              </div>
+              <Progress value={profile.completionPct} className="w-24" />
+            </CardContent>
+          </Card>
+        </Link>
+      )}
 
       <section>
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">

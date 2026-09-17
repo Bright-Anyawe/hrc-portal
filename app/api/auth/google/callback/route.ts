@@ -8,6 +8,7 @@ import {
   exchangeCodeForTokens,
   fetchGoogleUserInfo,
 } from "@/lib/google-auth";
+import { handleUserSignupStrategy } from "@/lib/welcome";
 
 const STATE_COOKIE = "hrc_google_oauth_state";
 const NEXT_COOKIE = "hrc_google_oauth_next";
@@ -55,18 +56,38 @@ export async function GET(req: NextRequest) {
     where: { googleId: googleUser.sub },
   });
 
-  const user = existingByGoogle
-    ? existingByGoogle
-    : await prisma.user.upsert({
+  let user = existingByGoogle;
+  let isNewSignup = false;
+
+  if (!user) {
+    const existingByEmail = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (existingByEmail) {
+      user = await prisma.user.update({
         where: { email },
-        update: { googleId: googleUser.sub },
-        create: {
-          name: googleUser.name,
+        data: { googleId: googleUser.sub },
+      });
+    } else {
+      user = await prisma.user.create({
+        data: {
+          name: googleUser.name || "Client",
           email,
           googleId: googleUser.sub,
           role: "CLIENT",
         },
       });
+      isNewSignup = true;
+    }
+  }
+
+  if (isNewSignup && user) {
+    await handleUserSignupStrategy({
+      user: { id: user.id, name: user.name, email: user.email },
+      signupMethod: "google",
+    });
+  }
 
   await createSession({
     sub: user.id,
