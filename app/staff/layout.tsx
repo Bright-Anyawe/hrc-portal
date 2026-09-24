@@ -1,6 +1,7 @@
 import { requireRole } from "@/lib/rbac";
 import { getNotifications } from "@/lib/notifications";
 import { PortalShell } from "@/components/portal-shell";
+import { NAV_LINKS } from "@/lib/nav";
 
 export default async function StaffLayout({
   children,
@@ -16,10 +17,7 @@ export default async function StaffLayout({
       role="Consultant"
       userRole="CONSULTANT"
       notifications={notifications}
-      links={[
-        { href: "/staff", label: "My Clients" },
-        { href: "/settings", label: "Settings" },
-      ]}
+      links={NAV_LINKS.CONSULTANT}
     >
       {children}
     </PortalShell>

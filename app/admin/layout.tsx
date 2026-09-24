@@ -1,6 +1,7 @@
 import { requireRole } from "@/lib/rbac";
 import { getNotifications } from "@/lib/notifications";
 import { PortalShell } from "@/components/portal-shell";
+import { NAV_LINKS } from "@/lib/nav";
 
 export default async function AdminLayout({
   children,
@@ -16,15 +17,7 @@ export default async function AdminLayout({
       role="Administrator"
       userRole="ADMIN"
       notifications={notifications}
-      links={[
-        { href: "/admin", label: "Overview" },
-        { href: "/admin/clients", label: "Clients" },
-        { href: "/admin/consultants", label: "Consultants" },
-        { href: "/admin/projects", label: "Projects" },
-        { href: "/admin/invoices", label: "Invoices" },
-        { href: "/admin/audit", label: "Audit log" },
-        { href: "/settings", label: "Settings" },
-      ]}
+      links={NAV_LINKS.ADMIN}
     >
       {children}
     </PortalShell>

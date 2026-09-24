@@ -3,6 +3,7 @@ import {
   ArrowLeft,
   ClipboardList,
   FileText,
+  NotebookPen,
   Plus,
   FolderOpen,
 } from "lucide-react";
@@ -10,6 +11,9 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/rbac";
 import { addTask } from "@/app/actions/staff";
+import { createTaskSheet } from "@/app/actions/task-sheets";
+import { TaskSheetStatusBadge } from "@/components/task-sheet-status";
+import { formatSheetNo, type TaskSheetData } from "@/lib/task-sheet";
 import { TaskItem, type TaskItemData } from "@/components/staff/task-item";
 import { ProjectStatusSelect } from "@/components/staff/project-status-select";
 import { DocumentUpload } from "@/components/document-upload";
@@ -46,6 +50,16 @@ export default async function StaffProjectPage({
       documents: {
         orderBy: { createdAt: "desc" },
         select: { id: true, name: true, fileUrl: true, createdAt: true },
+      },
+      taskSheets: {
+        orderBy: { sheetNo: "desc" },
+        select: {
+          id: true,
+          sheetNo: true,
+          status: true,
+          interactionDate: true,
+          data: true,
+        },
       },
     },
   });
@@ -116,6 +130,61 @@ export default async function StaffProjectPage({
           <p className="mt-2 text-xs text-muted-foreground">
             {progress}% complete
           </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-3">
+          <div className="space-y-1.5">
+            <CardTitle className="flex items-center gap-2">
+              <NotebookPen className="h-5 w-5" />
+              Client task sheets
+            </CardTitle>
+            <CardDescription>
+              Record every substantive client interaction. On submit, the client
+              sees only decisions, actions, commitments and next steps.
+            </CardDescription>
+          </div>
+          <form action={createTaskSheet.bind(null, project.id)}>
+            <Button type="submit" size="sm">
+              <Plus className="h-4 w-4" />
+              New task sheet
+            </Button>
+          </form>
+        </CardHeader>
+        <CardContent>
+          {project.taskSheets.length === 0 ? (
+            <EmptyState
+              icon={NotebookPen}
+              title="No task sheets yet"
+              description="Start one after your next meeting, site visit or call with the client."
+            />
+          ) : (
+            <ul className="space-y-1.5">
+              {project.taskSheets.map((sheet) => {
+                const data = (sheet.data ?? {}) as TaskSheetData;
+                return (
+                  <li key={sheet.id}>
+                    <Link
+                      href={`/staff/projects/${project.id}/task-sheets/${sheet.id}`}
+                      className="flex flex-wrap items-center gap-3 rounded-md border px-3 py-2 text-sm transition-all hover:border-ring/40 hover:bg-muted/50"
+                    >
+                      <span className="font-mono text-xs font-semibold">
+                        {formatSheetNo(sheet.sheetNo)}
+                      </span>
+                      <span className="min-w-0 flex-1 truncate">
+                        {data.purpose?.trim() || "No purpose recorded yet"}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {sheet.interactionDate?.toLocaleDateString() ?? "—"}
+                      </span>
+                      <TaskSheetStatusBadge status={sheet.status} />
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </CardContent>
       </Card>
 

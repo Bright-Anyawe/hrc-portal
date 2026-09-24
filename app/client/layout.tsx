@@ -1,6 +1,7 @@
 import { requireRole } from "@/lib/rbac";
 import { getNotifications } from "@/lib/notifications";
 import { PortalShell } from "@/components/portal-shell";
+import { NAV_LINKS } from "@/lib/nav";
 
 export default async function ClientLayout({
   children,
@@ -16,12 +17,7 @@ export default async function ClientLayout({
       role="Client"
       userRole="CLIENT"
       notifications={notifications}
-      links={[
-        { href: "/client", label: "Dashboard" },
-        { href: "/client/profile", label: "My Profile" },
-        { href: "/client/invoices", label: "Invoices" },
-        { href: "/settings", label: "Settings" },
-      ]}
+      links={NAV_LINKS.CLIENT}
     >
       {children}
     </PortalShell>

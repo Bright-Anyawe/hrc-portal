@@ -9,6 +9,7 @@ import {
   UserPlus,
   PlusCircle,
   ArrowUpRight,
+  NotebookPen,
 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/rbac";
@@ -44,7 +45,7 @@ function greeting() {
 export default async function AdminOverviewPage() {
   const session = await requireRole(["ADMIN"]);
 
-  const [clientCount, consultantCount, projectCount, activeCount, recentProjects, outstanding, paidInvoices] =
+  const [clientCount, consultantCount, projectCount, activeCount, recentProjects, outstanding, paidInvoices, sheetsAwaitingReview] =
     await Promise.all([
       prisma.user.count({ where: { role: "CLIENT" } }),
       prisma.user.count({ where: { role: "CONSULTANT" } }),
@@ -71,6 +72,7 @@ export default async function AdminOverviewPage() {
         where: { status: "PAID" },
         include: { lines: true },
       }),
+      prisma.taskSheet.count({ where: { status: "SUBMITTED" } }),
     ]);
 
   const now = new Date();
@@ -161,6 +163,28 @@ export default async function AdminOverviewPage() {
           </>
         }
       />
+
+      {sheetsAwaitingReview > 0 && (
+        <Link href="/admin/task-sheets?status=SUBMITTED" className="block">
+          <Card className="border-brand-navy/20 transition-all hover:border-primary/30 hover:shadow-md">
+            <CardContent className="flex items-center gap-4 py-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-navy/10">
+                <NotebookPen className="h-5 w-5 text-brand-navy" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="font-medium">
+                  {sheetsAwaitingReview} task sheet
+                  {sheetsAwaitingReview === 1 ? "" : "s"} awaiting review
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Submitted by consultants after client interactions.
+                </p>
+              </div>
+              <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
+            </CardContent>
+          </Card>
+        </Link>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
         {stats.map((stat, i) => (

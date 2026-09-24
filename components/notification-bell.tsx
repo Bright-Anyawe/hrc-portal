@@ -9,7 +9,9 @@ import {
   FileText,
   FolderKanban,
   MessageSquare,
+  NotebookPen,
   Receipt,
+  TriangleAlert,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -36,6 +38,11 @@ const TYPE_ICON: Record<string, LucideIcon> = {
   INVOICE_DRAFT: Receipt,
   INVOICE_PAYMENT: CreditCard,
   REQUEST: MessageSquare,
+  TASK_SHEET_SUBMITTED: NotebookPen,
+  TASK_SHEET_ESCALATION: TriangleAlert,
+  TASK_SHEET_REVIEWED: NotebookPen,
+  TASK_SHEET_RETURNED: NotebookPen,
+  TASK_SHEET_SHARED: NotebookPen,
 };
 
 const TYPE_ICON_CLASS: Record<string, string> = {
@@ -46,7 +53,30 @@ const TYPE_ICON_CLASS: Record<string, string> = {
   INVOICE_DRAFT: "bg-brand-gold/15 text-brand-gold",
   INVOICE_PAYMENT: "bg-emerald-600/10 text-emerald-600",
   REQUEST: "bg-brand-red/10 text-brand-red",
+  TASK_SHEET_SUBMITTED: "bg-brand-navy/10 text-brand-navy",
+  TASK_SHEET_ESCALATION: "bg-amber-500/15 text-amber-600",
+  TASK_SHEET_REVIEWED: "bg-emerald-600/10 text-emerald-600",
+  TASK_SHEET_RETURNED: "bg-brand-red/10 text-brand-red",
+  TASK_SHEET_SHARED: "bg-brand-sky/15 text-brand-sky",
 };
+
+type Role = "ADMIN" | "CONSULTANT" | "CLIENT";
+
+// Where clicking a notification should take each role.
+function targetFor(role: Role, type?: string, projectId?: string | null) {
+  if (type?.startsWith("TASK_SHEET_")) {
+    if (role === "ADMIN") return "/admin/task-sheets?status=SUBMITTED";
+    if (role === "CLIENT") return "/client/meetings";
+  }
+  if (type?.startsWith("CLIENT_PROFILE_")) {
+    if (role === "ADMIN") return "/admin/clients";
+    if (role === "CLIENT") return "/client/profile";
+  }
+  if (!projectId) return null;
+  if (role === "CONSULTANT") return `/staff/projects/${projectId}`;
+  if (role === "ADMIN") return "/admin/projects";
+  return "/client";
+}
 
 function typeIcon(type?: string): LucideIcon {
   return TYPE_ICON[type ?? ""] ?? Bell;
@@ -72,20 +102,13 @@ export function NotificationBell({
     });
   };
 
-  const openNotification = (id: string, projectId?: string | null) => {
+  const openNotification = (n: NotificationItem) => {
     startTransition(async () => {
-      await markNotificationRead(id);
+      await markNotificationRead(n.id);
       router.refresh();
       setOpen(false);
-      if (projectId) {
-        const target =
-          role === "CONSULTANT"
-            ? `/staff/projects/${projectId}`
-            : role === "ADMIN"
-              ? `/admin/projects`
-              : `/client`;
-        router.push(target);
-      }
+      const target = targetFor(role, n.type, n.projectId);
+      if (target) router.push(target);
     });
   };
 
@@ -141,7 +164,7 @@ export function NotificationBell({
                   >
                     <button
                       type="button"
-                      onClick={() => openNotification(n.id, n.projectId)}
+                      onClick={() => openNotification(n)}
                       className={cn(
                         "flex w-full items-start gap-3 px-3 py-2.5 text-left text-sm transition-colors hover:bg-muted",
                         !n.readAt && "bg-muted/60"
@@ -169,7 +192,7 @@ export function NotificationBell({
                         </span>
                         <span className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
                           {new Date(n.createdAt).toLocaleString()}
-                          {n.projectId && " · Open"}
+                          {targetFor(role, n.type, n.projectId) && " · Open"}
                         </span>
                       </span>
                       {!n.readAt && (

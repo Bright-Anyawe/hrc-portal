@@ -43,6 +43,12 @@ enum ProfileStatus {
   REJECTED
 }
 
+enum TaskSheetStatus {
+  DRAFT
+  SUBMITTED
+  REVIEWED
+}
+
 model User {
   id           String   @id @default(cuid())
   name         String
@@ -62,6 +68,9 @@ model User {
   invoicesForClient     Invoice[]          @relation("InvoicesForClient")
   clientProfile         ClientProfile?     @relation("ClientProfile")
   reviewedProfiles      ClientProfile[]    @relation("ReviewedProfiles")
+  taskSheetsAuthored    TaskSheet[]        @relation("TaskSheetsAuthored")
+  taskSheetsAsClient    TaskSheet[]        @relation("TaskSheetsClient")
+  taskSheetsReviewed    TaskSheet[]        @relation("TaskSheetsReviewed")
   notifications         Notification[]
   auditLogs             AuditLog[]
 
@@ -101,6 +110,7 @@ model Project {
   documents  Document[]
   notifications Notification[]
   invoices   Invoice[]
+  taskSheets TaskSheet[]
 
   @@index([clientId])
   @@index([consultantId])
@@ -246,4 +256,34 @@ model ClientProfile {
   @@index([userId])
   @@index([status])
   @@map("client_profiles")
+}
+
+// Consultant-Client Task Sheet: sequential record of each substantive
+// client interaction, numbered per project and linked to the client profile.
+model TaskSheet {
+  id              String          @id @default(cuid())
+  projectId       String
+  clientId        String
+  consultantId    String
+  sheetNo         Int
+  interactionDate DateTime?
+  status          TaskSheetStatus @default(DRAFT)
+  data            Json            @default("{}")
+  submittedAt     DateTime?
+  reviewedById    String?
+  reviewedAt      DateTime?
+  reviewComments  String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  project    Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  client     User    @relation("TaskSheetsClient", fields: [clientId], references: [id], onDelete: Cascade)
+  consultant User    @relation("TaskSheetsAuthored", fields: [consultantId], references: [id])
+  reviewedBy User?   @relation("TaskSheetsReviewed", fields: [reviewedById], references: [id])
+
+  @@unique([projectId, sheetNo])
+  @@index([clientId])
+  @@index([consultantId])
+  @@index([status])
+  @@map("task_sheets")
 }

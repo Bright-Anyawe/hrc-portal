@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, NotebookPen } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/rbac";
 import { ProfileForm } from "@/components/client/profile-form";
@@ -80,6 +80,15 @@ export default async function AdminClientProfilePage({
               </span>
             )}
           </span>
+        }
+        actions={
+          <Link
+            href={`/admin/task-sheets?status=ALL&client=${user.id}`}
+            className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <NotebookPen className="h-3.5 w-3.5" />
+            Task sheets
+          </Link>
         }
       />
 
