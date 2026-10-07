@@ -33,6 +33,14 @@ export default async function StaffTaskSheetPage({
     select: { id: true },
   });
 
+  const previous =
+    sheet.sheetNo > 1
+      ? await prisma.taskSheet.findUnique({
+          where: { projectId_sheetNo: { projectId: id, sheetNo: sheet.sheetNo - 1 } },
+          select: { data: true },
+        })
+      : null;
+
   const isDraft = sheet.status === "DRAFT";
   const backHref = `/staff/projects/${id}`;
 
@@ -75,6 +83,7 @@ export default async function StaffTaskSheetPage({
         readOnly={!isDraft}
         canDelete={isDraft && latest?.id === sheet.id}
         backHref={backHref}
+        previous={(previous?.data ?? null) as TaskSheetData | null}
         review={{
           reviewerName: sheet.reviewedBy?.name,
           reviewedAt: sheet.reviewedAt?.toISOString(),

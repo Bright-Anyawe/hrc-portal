@@ -1,10 +1,25 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
   CalendarClock,
+  Check,
+  CloudUpload,
+  Copy,
+  Keyboard,
+  Ban,
+  History,
+  Layers,
+  Zap,
   ChevronLeft,
   ChevronRight,
   ClipboardCheck,
@@ -37,9 +52,13 @@ import {
   INTERACTION_TYPES,
   INTERVENTION_TYPES,
   METHODOLOGY_STAGES,
+  PHRASES,
   PRIORITIES,
+  QUICK_STEPS,
   RATINGS,
   TASK_STATUSES,
+  missingForSubmit,
+  stepProgress,
   type TaskSheetData,
 } from "@/lib/task-sheet";
 import { Button } from "@/components/ui/button";
@@ -73,6 +92,173 @@ const STEPS = [
 const textareaClass =
   "flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-70";
 
+const FormCtx = createContext<{ readOnly: boolean }>({ readOnly: false });
+
+// Adds a phrase to a text value: first phrase replaces empty text, later
+// ones go on a new line (or "; " for single-line fields).
+function appendPhrase(current: string | undefined, phrase: string, sep = "\n") {
+  const text = (current ?? "").trimEnd();
+  if (!text) return phrase;
+  if (text.split(/\n|; /).some((p) => p.trim() === phrase)) return text;
+  return text + sep + phrase;
+}
+
+function Chips({
+  options,
+  onPick,
+}: {
+  options: readonly string[];
+  onPick: (phrase: string) => void;
+}) {
+  const { readOnly } = useContext(FormCtx);
+  if (readOnly) return null;
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {options.map((opt) => (
+        <button
+          key={opt}
+          type="button"
+          onClick={() => onPick(opt)}
+          className="rounded-full border border-dashed px-2.5 py-0.5 text-xs text-muted-foreground transition-colors hover:border-primary hover:bg-primary/5 hover:text-foreground"
+        >
+          + {opt}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+const PEOPLE_LIST = "ts-people";
+
+function isoDate(d: Date) {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+type Shortcut = "today" | "yesterday" | "1w" | "2w" | "eom";
+const SHORTCUT_LABEL: Record<Shortcut, string> = {
+  today: "Today",
+  yesterday: "Yesterday",
+  "1w": "+1 week",
+  "2w": "+2 weeks",
+  eom: "End of month",
+};
+function shortcutDate(s: Shortcut) {
+  const d = new Date();
+  if (s === "yesterday") d.setDate(d.getDate() - 1);
+  if (s === "1w") d.setDate(d.getDate() + 7);
+  if (s === "2w") d.setDate(d.getDate() + 14);
+  if (s === "eom") d.setMonth(d.getMonth() + 1, 0);
+  return isoDate(d);
+}
+const PAST_DATES: Shortcut[] = ["today", "yesterday"];
+const FUTURE_DATES: Shortcut[] = ["today", "1w", "2w", "eom"];
+
+function DateField({
+  value,
+  onChange,
+  shortcuts = FUTURE_DATES,
+  compact = false,
+}: {
+  value?: string;
+  onChange: (v: string) => void;
+  shortcuts?: Shortcut[];
+  compact?: boolean;
+}) {
+  const { readOnly } = useContext(FormCtx);
+  return (
+    <div className="space-y-1.5">
+      <Input type="date" value={value ?? ""} onChange={(e) => onChange(e.target.value)} />
+      {!readOnly && (
+        <div className="flex flex-wrap gap-1">
+          {(compact ? shortcuts.filter((s) => s !== "today") : shortcuts).map((s) => {
+            const v = shortcutDate(s);
+            return (
+              <button
+                key={s}
+                type="button"
+                onClick={() => onChange(v)}
+                className={cn(
+                  "rounded-md border px-2 py-0.5 text-[11px] transition-colors",
+                  value === v ? "border-primary bg-primary/10 text-foreground" : "text-muted-foreground hover:bg-muted"
+                )}
+              >
+                {SHORTCUT_LABEL[s]}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+const PILL_TONES: Record<string, string> = {
+  "Not Started": "border-slate-300 bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-100",
+  "In Progress": "border-sky-300 bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200",
+  Completed: "border-emerald-300 bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200",
+  Deferred: "border-amber-300 bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200",
+  Cancelled: "border-red-300 bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200",
+  Low: "border-emerald-300 bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200",
+  Medium: "border-amber-300 bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200",
+  High: "border-red-300 bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200",
+};
+
+// One-tap coloured options (action status, risk likelihood/impact).
+function Pills({
+  options,
+  value,
+  onChange,
+}: {
+  options: readonly string[];
+  value?: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-1">
+      {options.map((opt) => (
+        <button
+          key={opt}
+          type="button"
+          onClick={() => onChange(value === opt ? "" : opt)}
+          className={cn(
+            "rounded-full border px-2.5 py-0.5 text-xs font-medium transition-all",
+            value === opt
+              ? cn(PILL_TONES[opt] ?? "border-primary bg-primary/10", "ring-2 ring-offset-1")
+              : "border-border text-muted-foreground hover:bg-muted"
+          )}
+        >
+          {opt}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+type QuickAction = { label: string; icon?: "copy" | "none"; onClick: () => void; hidden?: boolean };
+
+// "Same as last time" / "None" one-tap buttons shown above a section.
+function QuickFill({ actions }: { actions: QuickAction[] }) {
+  const { readOnly } = useContext(FormCtx);
+  const shown = actions.filter((a) => !a.hidden);
+  if (readOnly || shown.length === 0) return null;
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {shown.map((a) => (
+        <button
+          key={a.label}
+          type="button"
+          onClick={a.onClick}
+          className="inline-flex items-center gap-1 rounded-md bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-primary/10 hover:text-foreground"
+        >
+          {a.icon === "none" ? <Ban className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+          {a.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function Field({
   label,
   children,
@@ -95,20 +281,27 @@ function Area({
   onChange,
   rows = 3,
   placeholder,
+  suggestions,
 }: {
   value?: string;
   onChange: (v: string) => void;
   rows?: number;
   placeholder?: string;
+  suggestions?: readonly string[];
 }) {
   return (
-    <textarea
-      value={value ?? ""}
-      onChange={(e) => onChange(e.target.value)}
-      rows={rows}
-      placeholder={placeholder}
-      className={textareaClass}
-    />
+    <div className="space-y-1.5">
+      {suggestions && (
+        <Chips options={suggestions} onPick={(p) => onChange(appendPhrase(value, p))} />
+      )}
+      <textarea
+        value={value ?? ""}
+        onChange={(e) => onChange(e.target.value)}
+        rows={rows}
+        placeholder={placeholder}
+        className={textareaClass}
+      />
+    </div>
   );
 }
 
@@ -195,8 +388,10 @@ function Choice({
 type Column<Row> = {
   key: keyof Row & string;
   label: string;
-  type?: "text" | "date" | "select";
-  options?: string[];
+  type?: "text" | "date" | "select" | "pills";
+  options?: readonly string[];
+  list?: string;
+  wide?: boolean;
 };
 
 function RowsEditor<Row extends Record<string, string | undefined>>({
@@ -237,9 +432,13 @@ function RowsEditor<Row extends Record<string, string | undefined>>({
           </div>
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {columns.map((col) => (
-              <div key={col.key} className="space-y-1">
+              <div key={col.key} className={cn("space-y-1", col.wide && "sm:col-span-2 lg:col-span-3")}>
                 <span className="text-xs text-muted-foreground">{col.label}</span>
-                {col.type === "select" ? (
+                {col.type === "pills" ? (
+                  <Pills options={col.options ?? []} value={row[col.key]} onChange={(v) => setCell(i, col.key, v)} />
+                ) : col.type === "date" ? (
+                  <DateField compact value={row[col.key]} onChange={(v) => setCell(i, col.key, v)} />
+                ) : col.type === "select" ? (
                   <Select
                     value={row[col.key] ?? ""}
                     onChange={(e) => setCell(i, col.key, e.target.value)}
@@ -253,7 +452,7 @@ function RowsEditor<Row extends Record<string, string | undefined>>({
                   </Select>
                 ) : (
                   <Input
-                    type={col.type ?? "text"}
+                    list={col.list}
                     value={row[col.key] ?? ""}
                     onChange={(e) => setCell(i, col.key, e.target.value)}
                   />
@@ -297,6 +496,7 @@ export function TaskSheetForm({
   canDelete = false,
   backHref,
   review,
+  previous,
 }: {
   sheetId: string;
   initialData: TaskSheetData;
@@ -304,6 +504,7 @@ export function TaskSheetForm({
   canDelete?: boolean;
   backHref?: string;
   review?: TaskSheetReviewInfo;
+  previous?: TaskSheetData | null;
 }) {
   const router = useRouter();
   const [data, setData] = useState<TaskSheetData>(initialData);
@@ -311,6 +512,47 @@ export function TaskSheetForm({
   const [dirty, setDirty] = useState(false);
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, startTransition] = useTransition();
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const latest = useRef(data);
+  latest.current = data;
+  const editVersion = useRef(0);
+
+  // Admin/read-only views always show every section.
+  const mode = readOnly ? "full" : (data.meta?.mode ?? "full");
+  const visibleSteps = mode === "quick" ? QUICK_STEPS : STEPS.map((_, i) => i);
+  const progress = stepProgress(data);
+  const doneCount = visibleSteps.filter((i) => progress[i].filled === progress[i].total).length;
+  const pos = visibleSteps.indexOf(step);
+  const prevStep = pos > 0 ? visibleSteps[pos - 1] : null;
+  const nextStep = pos >= 0 && pos < visibleSteps.length - 1 ? visibleSteps[pos + 1] : null;
+
+  // Autosave 1.5s after the last edit. Edits made while a save is in flight
+  // bump the version, so that stale result leaves the form dirty and the
+  // next timer saves again.
+  useEffect(() => {
+    if (readOnly || !dirty) return;
+    const version = ++editVersion.current;
+    const timer = setTimeout(async () => {
+      setSaveState("saving");
+      const res = await saveTaskSheet(sheetId, JSON.stringify(latest.current));
+      if (version !== editVersion.current) return;
+      if (res.ok) {
+        setDirty(false);
+        setSaveState("saved");
+      } else {
+        setSaveState("error");
+        setMessage({ ok: false, text: res.error ?? "Autosave failed." });
+      }
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [data, dirty, readOnly, sheetId]);
+
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
 
   function upd<K extends ObjectSection>(key: K, patch: Partial<NonNullable<TaskSheetData[K]>>) {
     setData((d) => ({ ...d, [key]: { ...(d[key] as object), ...patch } }));
@@ -321,23 +563,36 @@ export function TaskSheetForm({
     setDirty(true);
   }
 
-  const save = (quiet = false) =>
+  const save = () =>
     startTransition(async () => {
+      editVersion.current++;
       const res = await saveTaskSheet(sheetId, JSON.stringify(data));
-      if (res.ok) setDirty(false);
-      if (!quiet || !res.ok) {
-        setMessage(res.ok ? { ok: true, text: "Draft saved." } : { ok: false, text: res.error ?? "Save failed." });
+      if (res.ok) {
+        setDirty(false);
+        setSaveState("saved");
       }
+      setMessage(res.ok ? { ok: true, text: "Draft saved." } : { ok: false, text: res.error ?? "Save failed." });
     });
 
   const goTo = (i: number) => {
-    if (!readOnly && dirty) save(true);
     setMessage(null);
     setStep(i);
   };
 
-  const submit = () =>
+  const setMode = (m: "quick" | "full") => {
+    put("meta", { ...data.meta, mode: m });
+    if (m === "quick" && !QUICK_STEPS.includes(step)) setStep(QUICK_STEPS[0]);
+  };
+
+  const submit = () => {
+    const missing = missingForSubmit(data);
+    if (missing.length > 0) {
+      setStep(missing[0].step);
+      setMessage({ ok: false, text: `Please complete: ${missing.map((m) => m.label).join(", ")}.` });
+      return;
+    }
     startTransition(async () => {
+      editVersion.current++;
       const res = await submitTaskSheet(sheetId, JSON.stringify(data));
       if (res.ok) {
         setDirty(false);
@@ -347,6 +602,26 @@ export function TaskSheetForm({
         setMessage({ ok: false, text: res.error ?? "Submit failed." });
       }
     });
+  };
+
+  // Ctrl/Cmd+S saves, Ctrl/Cmd+Enter moves to the next step.
+  const keys = useRef({ save, next: () => nextStep !== null && goTo(nextStep) });
+  keys.current = { save, next: () => nextStep !== null && goTo(nextStep) };
+  useEffect(() => {
+    if (readOnly) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey)) return;
+      if (e.key === "s" || e.key === "S") {
+        e.preventDefault();
+        keys.current.save();
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        keys.current.next();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [readOnly]);
 
   const remove = () => {
     if (!confirm("Delete this draft task sheet? This cannot be undone.")) return;
@@ -376,31 +651,139 @@ export function TaskSheetForm({
   const cont = data.continuity ?? {};
   const decisionItems = dec.items && dec.items.length >= 3 ? dec.items : [...(dec.items ?? []), "", "", ""].slice(0, 3);
 
+  const people = [
+    ...new Set(
+      [id.consultantName, id.leadConsultant, id.contactPerson, cert.consultantName, id.clientName, "Client", "HRC"]
+        .map((p) => p?.trim())
+        .filter((p): p is string => !!p)
+    ),
+  ];
+  const prev = previous ?? null;
+
   const current = STEPS[step];
   const Icon = current.icon;
 
   return (
+    <FormCtx.Provider value={{ readOnly }}>
     <div className="space-y-6">
+      <datalist id={PEOPLE_LIST}>
+        {people.map((p) => (
+          <option key={p} value={p} />
+        ))}
+      </datalist>
+      {!readOnly && data.meta?.carriedFrom && (
+        <div className="flex items-start gap-2 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2.5 text-sm text-sky-900 dark:border-sky-800/50 dark:bg-sky-900/30 dark:text-sky-100">
+          <History className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>
+            Carried forward from <strong>{data.meta.carriedFrom}</strong>: evidence, diagnosis, task definition,
+            intervention, action plan and commitments. Review and update what changed — no need to retype.
+          </span>
+        </div>
+      )}
+
+      {!readOnly && (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="inline-flex rounded-lg border p-0.5 text-sm">
+            <button
+              type="button"
+              onClick={() => setMode("quick")}
+              className={cn(
+                "flex items-center gap-1.5 rounded-md px-3 py-1.5 font-medium transition-colors",
+                mode === "quick" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Zap className="h-3.5 w-3.5" />
+              Quick log
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode("full")}
+              className={cn(
+                "flex items-center gap-1.5 rounded-md px-3 py-1.5 font-medium transition-colors",
+                mode === "full" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Layers className="h-3.5 w-3.5" />
+              Full sheet
+            </button>
+          </div>
+          <span className="text-xs text-muted-foreground">
+            {mode === "quick"
+              ? "Essentials only (A, B–C, I–J, P–R, S–T). Other sections are kept, just hidden."
+              : "All sections A–T."}
+          </span>
+        </div>
+      )}
+
+      <div className="space-y-2">
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <span>
+            {doneCount} of {visibleSteps.length} sections complete
+          </span>
+          {!readOnly && (
+            <span className="flex items-center gap-1">
+              {saveState === "saving" || pending ? (
+                <>
+                  <CloudUpload className="h-3.5 w-3.5 animate-pulse" /> Saving…
+                </>
+              ) : dirty ? (
+                "Unsaved changes"
+              ) : saveState === "saved" ? (
+                <>
+                  <Check className="h-3.5 w-3.5 text-emerald-600" /> All changes saved
+                </>
+              ) : saveState === "error" ? (
+                <span className="text-destructive">Autosave failed</span>
+              ) : null}
+            </span>
+          )}
+        </div>
+        <div className="h-1.5 rounded-full bg-muted">
+          <div
+            className="h-1.5 rounded-full bg-emerald-500 transition-all"
+            style={{ width: `${Math.round((doneCount / visibleSteps.length) * 100)}%` }}
+          />
+        </div>
+      </div>
+
       <div className="flex flex-wrap gap-1">
-        {STEPS.map((s, i) => {
+        {visibleSteps.map((i) => {
+          const s = STEPS[i];
           const StepIcon = s.icon;
+          const p = progress[i];
+          const complete = p.filled === p.total;
           return (
             <button
               key={s.label}
               type="button"
               onClick={() => goTo(i)}
+              title={`${s.sections}. ${s.label} — ${p.filled}/${p.total} key fields`}
               className={cn(
                 "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
                 i === step
                   ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  : complete
+                    ? "bg-emerald-50 text-emerald-800 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-200"
+                    : "bg-muted text-muted-foreground hover:bg-muted/80"
               )}
             >
-              <StepIcon className="h-3 w-3" />
+              {complete ? <Check className="h-3 w-3" /> : <StepIcon className="h-3 w-3" />}
               <span className="hidden sm:inline">{s.label}</span>
+              {!complete && p.filled > 0 && (
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-500" aria-label="partly filled" />
+              )}
             </button>
           );
         })}
+        {mode === "quick" && (
+          <button
+            type="button"
+            onClick={() => setMode("full")}
+            className="rounded-md px-3 py-1.5 text-xs font-medium text-primary hover:underline"
+          >
+            + {STEPS.length - QUICK_STEPS.length} more sections
+          </button>
+        )}
       </div>
 
       <Card>
@@ -435,10 +818,10 @@ export function TaskSheetForm({
                     <Input value={id.projectCode ?? ""} onChange={(e) => upd("identification", { projectCode: e.target.value })} />
                   </Field>
                   <Field label="Senior / Principal / Lead Consultant">
-                    <Input value={id.leadConsultant ?? ""} onChange={(e) => upd("identification", { leadConsultant: e.target.value })} />
+                    <Input list={PEOPLE_LIST} value={id.leadConsultant ?? ""} onChange={(e) => upd("identification", { leadConsultant: e.target.value })} />
                   </Field>
                   <Field label="Consultant Completing Task Sheet">
-                    <Input value={id.consultantName ?? ""} onChange={(e) => upd("identification", { consultantName: e.target.value })} />
+                    <Input list={PEOPLE_LIST} value={id.consultantName ?? ""} onChange={(e) => upd("identification", { consultantName: e.target.value })} />
                   </Field>
                   <Field label="Client Contact Person">
                     <Input value={id.contactPerson ?? ""} onChange={(e) => upd("identification", { contactPerson: e.target.value })} />
@@ -447,7 +830,7 @@ export function TaskSheetForm({
                     <Input value={id.contactPosition ?? ""} onChange={(e) => upd("identification", { contactPosition: e.target.value })} />
                   </Field>
                   <Field label="Date of Interaction *">
-                    <Input type="date" value={id.interactionDate ?? ""} onChange={(e) => upd("identification", { interactionDate: e.target.value })} />
+                    <DateField shortcuts={PAST_DATES} value={id.interactionDate} onChange={(v) => upd("identification", { interactionDate: v })} />
                   </Field>
                   <div className="grid grid-cols-2 gap-2">
                     <Field label="Start Time">
@@ -483,21 +866,30 @@ export function TaskSheetForm({
             {step === 1 && (
               <>
                 <Field label="B. Purpose of this interaction *">
-                  <Area
+                  <Area suggestions={PHRASES.purpose}
                     value={data.purpose}
                     onChange={(v) => put("purpose", v)}
                     placeholder="State the specific purpose. Avoid vague entries such as 'meeting with client'."
                   />
                 </Field>
+                <QuickFill
+                  actions={[
+                    {
+                      label: "Same issue as last time",
+                      hidden: !prev?.presentingIssue,
+                      onClick: () => put("presentingIssue", JSON.parse(JSON.stringify(prev?.presentingIssue ?? {}))),
+                    },
+                  ]}
+                />
                 <Field label="C. Client's account of the problem, need, opportunity, concern or request *">
-                  <Area rows={4} value={issue.account} onChange={(v) => upd("presentingIssue", { account: v })} />
+                  <Area suggestions={PHRASES.presentingIssue} rows={4} value={issue.account} onChange={(v) => upd("presentingIssue", { account: v })} />
                 </Field>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Field label="When did the issue arise?">
-                    <Area rows={2} value={issue.whenArose} onChange={(v) => upd("presentingIssue", { whenArose: v })} />
+                    <Area suggestions={PHRASES.whenArose} rows={2} value={issue.whenArose} onChange={(v) => upd("presentingIssue", { whenArose: v })} />
                   </Field>
                   <Field label="What has changed?">
-                    <Area rows={2} value={issue.whatChanged} onChange={(v) => upd("presentingIssue", { whatChanged: v })} />
+                    <Area suggestions={PHRASES.whatChanged} rows={2} value={issue.whatChanged} onChange={(v) => upd("presentingIssue", { whatChanged: v })} />
                   </Field>
                 </div>
                 <Field label="Effect on the organisation">
@@ -529,7 +921,7 @@ export function TaskSheetForm({
                   />
                 </Field>
                 <Field label="Key evidence / observations">
-                  <Area rows={4} value={ev.keyObservations} onChange={(v) => upd("evidence", { keyObservations: v })} />
+                  <Area suggestions={PHRASES.keyObservations} rows={4} value={ev.keyObservations} onChange={(v) => upd("evidence", { keyObservations: v })} />
                 </Field>
                 <Field label="Documents received">
                   <RowsEditor
@@ -539,13 +931,13 @@ export function TaskSheetForm({
                     columns={[
                       { key: "document", label: "Document" },
                       { key: "dateVersion", label: "Date / Version" },
-                      { key: "receivedFrom", label: "Received From" },
+                      { key: "receivedFrom", label: "Received From", list: PEOPLE_LIST },
                       { key: "followUp", label: "Follow-Up Required" },
                     ]}
                   />
                 </Field>
                 <Field label="Information still required">
-                  <Area value={ev.stillRequired} onChange={(v) => upd("evidence", { stillRequired: v })} />
+                  <Area suggestions={PHRASES.stillRequired} value={ev.stillRequired} onChange={(v) => upd("evidence", { stillRequired: v })} />
                 </Field>
               </>
             )}
@@ -556,18 +948,18 @@ export function TaskSheetForm({
                   <Area value={dx.presentingProblem} onChange={(v) => upd("diagnosis", { presentingProblem: v })} />
                 </Field>
                 <Field label="2. Probable underlying / root cause(s) — Why does it appear to be happening?">
-                  <Area rows={4} value={dx.rootCauses} onChange={(v) => upd("diagnosis", { rootCauses: v })} />
+                  <Area suggestions={PHRASES.rootCauses} rows={4} value={dx.rootCauses} onChange={(v) => upd("diagnosis", { rootCauses: v })} />
                 </Field>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Field label="3. Contributing factors">
                     <Area value={dx.contributingFactors} onChange={(v) => upd("diagnosis", { contributingFactors: v })} />
                   </Field>
                   <Field label="4. Constraints">
-                    <Area value={dx.constraints} onChange={(v) => upd("diagnosis", { constraints: v })} />
+                    <Area suggestions={PHRASES.constraints} value={dx.constraints} onChange={(v) => upd("diagnosis", { constraints: v })} />
                   </Field>
                 </div>
                 <Field label="5. Opportunities identified">
-                  <Area value={dx.opportunities} onChange={(v) => upd("diagnosis", { opportunities: v })} />
+                  <Area suggestions={PHRASES.opportunities} value={dx.opportunities} onChange={(v) => upd("diagnosis", { opportunities: v })} />
                 </Field>
                 <Field label="6. Risks identified">
                   <RowsEditor
@@ -576,8 +968,8 @@ export function TaskSheetForm({
                     onChange={(rows) => upd("diagnosis", { risks: rows })}
                     columns={[
                       { key: "risk", label: "Risk" },
-                      { key: "likelihood", label: "Likelihood", type: "select", options: RATINGS },
-                      { key: "impact", label: "Impact", type: "select", options: RATINGS },
+                      { key: "likelihood", label: "Likelihood", type: "pills", options: RATINGS },
+                      { key: "impact", label: "Impact", type: "pills", options: RATINGS },
                       { key: "response", label: "Proposed Response" },
                     ]}
                   />
@@ -591,10 +983,10 @@ export function TaskSheetForm({
             {step === 4 && (
               <>
                 <Field label="Task statement — What precisely needs to be done?">
-                  <Area rows={4} value={def.taskStatement} onChange={(v) => upd("definition", { taskStatement: v })} />
+                  <Area suggestions={PHRASES.taskStatement} rows={4} value={def.taskStatement} onChange={(v) => upd("definition", { taskStatement: v })} />
                 </Field>
                 <Field label="Desired result">
-                  <Area value={def.desiredResult} onChange={(v) => upd("definition", { desiredResult: v })} />
+                  <Area suggestions={PHRASES.desiredResult} value={def.desiredResult} onChange={(v) => upd("definition", { desiredResult: v })} />
                 </Field>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Field label="Scope — Included">
@@ -609,7 +1001,7 @@ export function TaskSheetForm({
                     <Choice options={PRIORITIES} value={def.priority} onChange={(v) => upd("definition", { priority: v })} />
                   </Field>
                   <Field label="Target completion date">
-                    <Input type="date" value={def.targetDate ?? ""} onChange={(e) => upd("definition", { targetDate: e.target.value })} />
+                    <DateField value={def.targetDate} onChange={(v) => upd("definition", { targetDate: v })} />
                   </Field>
                 </div>
               </>
@@ -618,7 +1010,7 @@ export function TaskSheetForm({
             {step === 5 && (
               <>
                 <Field label="G. Consultant's professional recommendation">
-                  <Area rows={4} value={iv.recommendation} onChange={(v) => upd("intervention", { recommendation: v })} />
+                  <Area suggestions={PHRASES.recommendation} rows={4} value={iv.recommendation} onChange={(v) => upd("intervention", { recommendation: v })} />
                 </Field>
                 <Field label="Proposed intervention">
                   <Checks
@@ -631,7 +1023,7 @@ export function TaskSheetForm({
                   />
                 </Field>
                 <Field label="Rationale — Why is this intervention appropriate?">
-                  <Area value={iv.rationale} onChange={(v) => upd("intervention", { rationale: v })} />
+                  <Area suggestions={PHRASES.rationale} value={iv.rationale} onChange={(v) => upd("intervention", { rationale: v })} />
                 </Field>
                 <Field label="H. Current methodology stage">
                   <div className="grid gap-2 sm:grid-cols-2">
@@ -654,7 +1046,7 @@ export function TaskSheetForm({
                   </div>
                 </Field>
                 <Field label="Method / tool used during this interaction">
-                  <Area value={meth.methodUsed} onChange={(v) => upd("methodology", { methodUsed: v })} />
+                  <Area suggestions={PHRASES.methodUsed} value={meth.methodUsed} onChange={(v) => upd("methodology", { methodUsed: v })} />
                 </Field>
               </>
             )}
@@ -669,10 +1061,10 @@ export function TaskSheetForm({
                     onChange={(rows) => put("actionPlan", rows)}
                     columns={[
                       { key: "action", label: "Action / Task" },
-                      { key: "responsible", label: "Responsible Person" },
+                      { key: "responsible", label: "Responsible Person", list: PEOPLE_LIST },
                       { key: "dueDate", label: "Due Date", type: "date" },
                       { key: "expectedOutput", label: "Expected Output" },
-                      { key: "status", label: "Status", type: "select", options: ACTION_STATUSES },
+                      { key: "status", label: "Status", type: "pills", options: ACTION_STATUSES, wide: true },
                     ]}
                   />
                 </Field>
@@ -692,6 +1084,16 @@ export function TaskSheetForm({
                     ))}
                   </div>
                 </Field>
+                <QuickFill
+                  actions={[
+                    {
+                      label: "No scope or commercial changes",
+                      icon: "none",
+                      onClick: () =>
+                        upd("decisions", { scopeChanged: "No", scopeChangeDetails: "", commercialImplication: "None" }),
+                    },
+                  ]}
+                />
                 <Field label="Changes to previously agreed scope?">
                   <Choice options={["No", "Yes"]} value={dec.scopeChanged} onChange={(v) => upd("decisions", { scopeChanged: v })} />
                 </Field>
@@ -715,13 +1117,13 @@ export function TaskSheetForm({
                 <h3 className="text-sm font-semibold">K. Client commitments</h3>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Field label="Information / documents client must provide">
-                    <Area value={cc.information} onChange={(v) => upd("clientCommitments", { information: v })} />
+                    <Area suggestions={PHRASES.clientInformation} value={cc.information} onChange={(v) => upd("clientCommitments", { information: v })} />
                   </Field>
                   <Field label="Client personnel required">
-                    <Area value={cc.personnel} onChange={(v) => upd("clientCommitments", { personnel: v })} />
+                    <Area suggestions={PHRASES.clientPersonnel} value={cc.personnel} onChange={(v) => upd("clientCommitments", { personnel: v })} />
                   </Field>
                   <Field label="Client approvals required">
-                    <Area value={cc.approvals} onChange={(v) => upd("clientCommitments", { approvals: v })} />
+                    <Area suggestions={PHRASES.clientApprovals} value={cc.approvals} onChange={(v) => upd("clientCommitments", { approvals: v })} />
                   </Field>
                   <Field label="Other client obligations">
                     <Area value={cc.other} onChange={(v) => upd("clientCommitments", { other: v })} />
@@ -730,16 +1132,16 @@ export function TaskSheetForm({
                 <h3 className="border-t pt-4 text-sm font-semibold">L. Consultant commitments</h3>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Field label="Work consultant has agreed to undertake">
-                    <Area value={hc.work} onChange={(v) => upd("consultantCommitments", { work: v })} />
+                    <Area suggestions={PHRASES.consultantWork} value={hc.work} onChange={(v) => upd("consultantCommitments", { work: v })} />
                   </Field>
                   <Field label="Deliverable(s)">
-                    <Area value={hc.deliverables} onChange={(v) => upd("consultantCommitments", { deliverables: v })} />
+                    <Area suggestions={PHRASES.deliverables} value={hc.deliverables} onChange={(v) => upd("consultantCommitments", { deliverables: v })} />
                   </Field>
                   <Field label="Responsible consultant(s)">
-                    <Input value={hc.responsible ?? ""} onChange={(e) => upd("consultantCommitments", { responsible: e.target.value })} />
+                    <Input list={PEOPLE_LIST} value={hc.responsible ?? ""} onChange={(e) => upd("consultantCommitments", { responsible: e.target.value })} />
                   </Field>
                   <Field label="Due date">
-                    <Input type="date" value={hc.dueDate ?? ""} onChange={(e) => upd("consultantCommitments", { dueDate: e.target.value })} />
+                    <DateField value={hc.dueDate} onChange={(v) => upd("consultantCommitments", { dueDate: v })} />
                   </Field>
                 </div>
               </>
@@ -747,6 +1149,20 @@ export function TaskSheetForm({
 
             {step === 8 && (
               <>
+                <QuickFill
+                  actions={[
+                    {
+                      label: "No escalation",
+                      icon: "none",
+                      onClick: () => put("escalation", { to: ["No"], issue: "", recommendedAction: "" }),
+                    },
+                    {
+                      label: "Same escalation as last time",
+                      hidden: !(prev?.escalation?.to ?? []).some((t) => t !== "No"),
+                      onClick: () => put("escalation", JSON.parse(JSON.stringify(prev?.escalation ?? {}))),
+                    },
+                  ]}
+                />
                 <Field label="M. Issues requiring escalation">
                   <Checks
                     columns={3}
@@ -758,7 +1174,7 @@ export function TaskSheetForm({
                 {(esc.to ?? []).some((t) => t !== "No") && (
                   <div className="grid gap-4 sm:grid-cols-2">
                     <Field label="Issue requiring escalation">
-                      <Area value={esc.issue} onChange={(v) => upd("escalation", { issue: v })} />
+                      <Area suggestions={PHRASES.escalationIssue} value={esc.issue} onChange={(v) => upd("escalation", { issue: v })} />
                     </Field>
                     <Field label="Recommended action">
                       <Area value={esc.recommendedAction} onChange={(v) => upd("escalation", { recommendedAction: v })} />
@@ -772,10 +1188,10 @@ export function TaskSheetForm({
                   <Choice options={CLIENT_RESPONSES} value={fb.response} onChange={(v) => upd("feedback", { response: v })} />
                 </Field>
                 <Field label="Comments">
-                  <Area value={fb.comments} onChange={(v) => upd("feedback", { comments: v })} />
+                  <Area suggestions={PHRASES.feedbackComments} value={fb.comments} onChange={(v) => upd("feedback", { comments: v })} />
                 </Field>
                 <Field label="O. Consultant's professional notes">
-                  <Area
+                  <Area suggestions={PHRASES.professionalNotes}
                     rows={5}
                     value={data.professionalNotes}
                     onChange={(v) => put("professionalNotes", v)}
@@ -787,6 +1203,15 @@ export function TaskSheetForm({
 
             {step === 9 && (
               <>
+                <QuickFill
+                  actions={[
+                    {
+                      label: "Same as last time",
+                      hidden: !prev?.opportunities?.additionalNeed,
+                      onClick: () => put("opportunities", JSON.parse(JSON.stringify(prev?.opportunities ?? {}))),
+                    },
+                  ]}
+                />
                 <Field label="P. Additional client need identified?">
                   <Choice options={["No", "Yes"]} value={opp.additionalNeed} onChange={(v) => upd("opportunities", { additionalNeed: v })} />
                 </Field>
@@ -813,21 +1238,46 @@ export function TaskSheetForm({
                 <h3 className="border-t pt-4 text-sm font-semibold">Q. Next interaction / follow-up</h3>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Field label="Next action">
+                    <Chips options={PHRASES.nextAction} onPick={(p) => upd("nextInteraction", { nextAction: appendPhrase(next.nextAction, p, "; ") })} />
                     <Input value={next.nextAction ?? ""} onChange={(e) => upd("nextInteraction", { nextAction: e.target.value })} />
                   </Field>
                   <Field label="Next meeting / interaction date">
-                    <Input type="date" value={next.date ?? ""} onChange={(e) => upd("nextInteraction", { date: e.target.value })} />
+                    <DateField value={next.date} onChange={(v) => upd("nextInteraction", { date: v })} />
                   </Field>
                   <Field label="Purpose of next interaction">
+                    <Chips options={PHRASES.nextPurpose} onPick={(p) => upd("nextInteraction", { purpose: appendPhrase(next.purpose, p, "; ") })} />
                     <Input value={next.purpose ?? ""} onChange={(e) => upd("nextInteraction", { purpose: e.target.value })} />
                   </Field>
+                  <QuickFill
+                    actions={[
+                      {
+                        label: "Same next steps as last time",
+                        hidden: !prev?.nextInteraction?.nextAction,
+                        onClick: () =>
+                          upd("nextInteraction", {
+                            nextAction: prev?.nextInteraction?.nextAction,
+                            consultantResponsible: prev?.nextInteraction?.consultantResponsible,
+                          }),
+                      },
+                    ]}
+                  />
                   <Field label="Consultant responsible">
                     <Input
+                      list={PEOPLE_LIST}
                       value={next.consultantResponsible ?? ""}
                       onChange={(e) => upd("nextInteraction", { consultantResponsible: e.target.value })}
                     />
                   </Field>
                 </div>
+                <QuickFill
+                  actions={[
+                    {
+                      label: "Same status as last time",
+                      hidden: !prev?.taskStatus?.statuses?.length,
+                      onClick: () => put("taskStatus", JSON.parse(JSON.stringify(prev?.taskStatus ?? {}))),
+                    },
+                  ]}
+                />
                 <Field label="R. Task status at end of interaction">
                   <Checks columns={3} options={TASK_STATUSES} value={ts.statuses} onChange={(v) => upd("taskStatus", { statuses: v })} />
                 </Field>
@@ -864,7 +1314,7 @@ export function TaskSheetForm({
                 </label>
                 <div className="grid gap-4 sm:grid-cols-3">
                   <Field label="Consultant">
-                    <Input value={cert.consultantName ?? ""} onChange={(e) => upd("certification", { consultantName: e.target.value })} />
+                    <Input list={PEOPLE_LIST} value={cert.consultantName ?? ""} onChange={(e) => upd("certification", { consultantName: e.target.value })} />
                   </Field>
                   <Field label="Signature (type your full name) *">
                     <Input
@@ -875,7 +1325,7 @@ export function TaskSheetForm({
                     />
                   </Field>
                   <Field label="Date">
-                    <Input type="date" value={cert.date ?? ""} onChange={(e) => upd("certification", { date: e.target.value })} />
+                    <DateField shortcuts={["today"]} value={cert.date} onChange={(v) => upd("certification", { date: v })} />
                   </Field>
                 </div>
                 <div className="rounded-lg border bg-muted/30 p-4">
@@ -932,8 +1382,16 @@ export function TaskSheetForm({
         </CardContent>
       </Card>
 
+      {!readOnly && (
+        <p className="hidden items-center gap-1.5 text-xs text-muted-foreground sm:flex">
+          <Keyboard className="h-3.5 w-3.5" />
+          <kbd className="rounded border px-1">Ctrl</kbd>+<kbd className="rounded border px-1">S</kbd> save ·
+          <kbd className="rounded border px-1">Ctrl</kbd>+<kbd className="rounded border px-1">Enter</kbd> next step
+        </p>
+      )}
+
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <Button type="button" variant="outline" onClick={() => goTo(Math.max(0, step - 1))} disabled={step === 0}>
+        <Button type="button" variant="outline" onClick={() => prevStep !== null && goTo(prevStep)} disabled={prevStep === null}>
           <ChevronLeft className="h-4 w-4" />
           Previous
         </Button>
@@ -946,13 +1404,13 @@ export function TaskSheetForm({
             </Button>
           )}
           {!readOnly && (
-            <Button type="button" variant="outline" onClick={() => save()} loading={pending}>
+            <Button type="button" variant="outline" onClick={save} loading={pending}>
               <Save className="h-4 w-4" />
               Save draft
             </Button>
           )}
-          {step < STEPS.length - 1 ? (
-            <Button type="button" variant="outline" onClick={() => goTo(step + 1)}>
+          {nextStep !== null ? (
+            <Button type="button" variant="outline" onClick={() => goTo(nextStep)}>
               Next
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -972,5 +1430,6 @@ export function TaskSheetForm({
         </div>
       </div>
     </div>
+    </FormCtx.Provider>
   );
 }

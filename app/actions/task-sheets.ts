@@ -8,7 +8,9 @@ import { logAudit } from "@/lib/audit";
 import { notify, notifyAdmins } from "@/lib/notify";
 import type { ClientProfileData, HrcInternalData } from "@/app/actions/client-profile";
 import {
+  carryForward,
   formatSheetNo,
+  missingForSubmit,
   projectCode,
   type TaskSheetData,
 } from "@/lib/task-sheet";
@@ -91,12 +93,19 @@ export async function createTaskSheet(projectId: string) {
     const last = await prisma.taskSheet.findFirst({
       where: { projectId },
       orderBy: { sheetNo: "desc" },
-      select: { sheetNo: true },
+      select: { sheetNo: true, data: true },
     });
     const sheetNo = (last?.sheetNo ?? 0) + 1;
+    const carried = last ? carryForward((last.data ?? {}) as TaskSheetData) : {};
 
     const data: TaskSheetData = {
+      ...carried,
+      // Follow-up sheets start in quick mode; the first sheet is filled in full.
+      meta: last
+        ? { mode: "quick", carriedFrom: formatSheetNo(last.sheetNo) }
+        : { mode: "full" },
       identification: {
+        ...carried.identification,
         clientName: profile.organization?.orgName || project.client.name,
         clientCode: hrc.clientId ?? "",
         project: project.title,
@@ -191,12 +200,7 @@ export async function submitTaskSheet(
   const data = parseData(dataRaw);
   if (!data) return { ok: false, error: "Invalid data format." };
 
-  const missing: string[] = [];
-  if (!data.identification?.interactionDate) missing.push("date of interaction (A)");
-  if (!data.purpose?.trim()) missing.push("purpose of interaction (B)");
-  if (!data.presentingIssue?.account?.trim()) missing.push("presenting issue (C)");
-  if (!data.certification?.certified) missing.push("consultant certification (S)");
-  if (!data.certification?.signature?.trim()) missing.push("consultant signature (S)");
+  const missing = missingForSubmit(data).map((m) => m.label);
   if (missing.length > 0) {
     return { ok: false, error: `Please complete: ${missing.join(", ")}.` };
   }

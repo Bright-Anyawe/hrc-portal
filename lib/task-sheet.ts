@@ -24,6 +24,11 @@ export type ActionRow = {
 };
 
 export type TaskSheetData = {
+  // Form helpers, not part of the paper sheet.
+  meta?: {
+    mode?: "quick" | "full";
+    carriedFrom?: string;
+  };
   // A. Client & engagement identification
   identification?: {
     clientName?: string;
@@ -370,3 +375,131 @@ export const TASK_SHEET_STATUS_VARIANT = {
   SUBMITTED: "warning",
   REVIEWED: "success",
 } as const;
+
+// --- Form ergonomics ---------------------------------------------------------
+
+// Step indices shown in "Quick log" mode: A, B–C, I–J, P–R, S–T.
+export const QUICK_STEPS = [0, 1, 6, 9, 10];
+
+// Sections copied from the previous sheet when a new one is created, so
+// follow-up interactions become "update" rather than "rewrite".
+export function carryForward(prev: TaskSheetData): TaskSheetData {
+  const clone = <T,>(v: T): T => (v === undefined ? v : JSON.parse(JSON.stringify(v)));
+  return {
+    purpose: prev.nextInteraction?.purpose ?? "",
+    identification: {
+      location: prev.identification?.location,
+      interactionType: clone(prev.identification?.interactionType),
+      interactionTypeOther: prev.identification?.interactionTypeOther,
+    },
+    evidence: clone(prev.evidence),
+    diagnosis: clone(prev.diagnosis),
+    definition: clone(prev.definition),
+    intervention: clone(prev.intervention),
+    methodology: clone(prev.methodology),
+    actionPlan: clone(prev.actionPlan),
+    clientCommitments: clone(prev.clientCommitments),
+    consultantCommitments: clone(prev.consultantCommitments),
+  };
+}
+
+// Tappable phrases inserted into free-text fields (then edited as needed).
+export const PHRASES = {
+  purpose: [
+    "Kick-off / inception meeting",
+    "Clarify scope and expectations",
+    "Data and information collection",
+    "Diagnostic interview with management",
+    "Present preliminary findings",
+    "Validate draft report with client",
+    "Progress review",
+    "Agree next steps and work plan",
+  ],
+  presentingIssue: [
+    "Declining financial performance",
+    "Weak internal systems and controls",
+    "Staff capacity gaps",
+    "Unclear strategic direction",
+    "Funding / resource constraints",
+    "Compliance requirements not being met",
+  ],
+  whenArose: ["Within the last 3 months", "Over the past year", "Long-standing issue", "Since a recent leadership change"],
+  whatChanged: ["New leadership", "Loss of key funding", "Rapid growth", "Regulatory change", "Market / competitive change"],
+  keyObservations: [
+    "Records are incomplete or outdated",
+    "Roles and responsibilities are unclear",
+    "Management is committed to change",
+    "Processes are largely manual",
+    "Data is not used for decision-making",
+  ],
+  stillRequired: ["Audited financial statements", "Organogram", "Strategic plan", "HR policies", "Project reports", "Staff list"],
+  rootCauses: [
+    "Inadequate systems and processes",
+    "Capacity / skills gaps",
+    "Weak governance and oversight",
+    "Insufficient funding",
+    "Poor communication across teams",
+  ],
+  constraints: ["Limited budget", "Tight timelines", "Limited staff availability", "Data unavailable", "Pending board approval"],
+  opportunities: ["Management buy-in", "Donor interest", "Digitisation potential", "Untapped market segment", "Existing staff expertise"],
+  taskStatement: [
+    "Develop a strategic plan",
+    "Conduct an organisational assessment",
+    "Design and deliver a training programme",
+    "Review and update policies and procedures",
+    "Carry out a feasibility study",
+  ],
+  desiredResult: ["Approved plan adopted by the board", "Improved staff performance", "Clear, documented processes", "Funding secured", "Informed management decision"],
+  recommendation: [
+    "Proceed with a full diagnostic assessment",
+    "Run a stakeholder validation workshop",
+    "Develop a phased implementation plan",
+    "Provide targeted technical assistance",
+  ],
+  rationale: ["Addresses the root cause identified", "Fits the client's budget and timeline", "Builds internal capacity", "Proven approach in similar organisations"],
+  methodUsed: ["Structured interview", "Document review", "SWOT analysis", "Problem tree", "Stakeholder mapping", "Focus group discussion", "Site observation"],
+  clientInformation: ["Financial statements", "Organogram", "Strategic plan", "HR records", "Previous reports", "Staff list"],
+  clientPersonnel: ["Nominate a focal person", "Management team availability", "Finance officer", "HR officer"],
+  clientApprovals: ["Approve work plan", "Approve inception report", "Approve draft report", "Approve budget"],
+  consultantWork: ["Prepare inception report", "Conduct field data collection", "Draft the report", "Facilitate workshop", "Develop tools and templates"],
+  deliverables: ["Inception report", "Draft report", "Final report", "Workshop report", "Presentation slides", "Training materials"],
+  escalationIssue: ["Scope creep", "Delayed client information", "Payment concerns", "Potential conflict of interest"],
+  feedbackComments: ["Client satisfied with progress", "Client requested more detail", "Client will revert after internal discussion"],
+  professionalNotes: ["Client engaged and cooperative", "Key decision-maker was absent", "Follow-up needed on outstanding documents"],
+  nextAction: ["Send meeting notes", "Share draft for review", "Collect outstanding documents", "Schedule workshop"],
+  nextPurpose: ["Progress review", "Present findings", "Validation workshop", "Collect outstanding information"],
+} as const;
+
+type StepCheck = { filled: number; total: number };
+const has = (v: unknown) =>
+  Array.isArray(v) ? v.length > 0 : typeof v === "boolean" ? v : !!String(v ?? "").trim();
+
+// Key fields per step, used for the ✓ / • progress indicators.
+export function stepProgress(d: TaskSheetData): StepCheck[] {
+  const id = d.identification ?? {};
+  const checks: unknown[][] = [
+    [id.interactionDate, id.contactPerson, id.location, id.interactionType],
+    [d.purpose, d.presentingIssue?.account],
+    [d.evidence?.sources, d.evidence?.keyObservations],
+    [d.diagnosis?.presentingProblem, d.diagnosis?.rootCauses, d.diagnosis?.status],
+    [d.definition?.taskStatement, d.definition?.priority],
+    [d.intervention?.recommendation, d.intervention?.types, d.methodology?.stage],
+    [(d.actionPlan ?? []).some((r) => r.action?.trim()), (d.decisions?.items ?? []).some((i) => i.trim())],
+    [Object.values(d.clientCommitments ?? {}).some(has), d.consultantCommitments?.work],
+    [d.escalation?.to, d.feedback?.response],
+    [d.nextInteraction?.date || d.nextInteraction?.nextAction, d.taskStatus?.statuses],
+    [d.certification?.certified, d.certification?.signature],
+  ];
+  return checks.map((c) => ({ filled: c.filter(has).length, total: c.length }));
+}
+
+// Fields required to submit, with the step each one lives on.
+export function missingForSubmit(d: TaskSheetData): { step: number; label: string }[] {
+  const out: { step: number; label: string }[] = [];
+  if (!d.identification?.interactionDate) out.push({ step: 0, label: "date of interaction (A)" });
+  if (!d.purpose?.trim()) out.push({ step: 1, label: "purpose of interaction (B)" });
+  if (!d.presentingIssue?.account?.trim()) out.push({ step: 1, label: "presenting issue (C)" });
+  if (!d.certification?.certified) out.push({ step: 10, label: "consultant certification (S)" });
+  if (!d.certification?.signature?.trim()) out.push({ step: 10, label: "consultant signature (S)" });
+  return out;
+}
